@@ -1,0 +1,9 @@
+# Ignore Mac System files
+.DS_store
+
+# Ignore audio files
+*.wav
+
+# Ignore video files
+*.h264
+*.mp4
