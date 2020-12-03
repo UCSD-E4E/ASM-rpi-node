@@ -15,4 +15,4 @@ with picamera.PiCamera() as camera:
 command = "MP4Box -add test_video.h264 converted.mp4"
 call([command], shell=True)
 
-
+print("Done")
