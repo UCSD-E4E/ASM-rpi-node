@@ -18,7 +18,7 @@ void setup() {
 
 void loop() {
 	if (IMU.accelerationAvailable()) {
-		IMU.readAcceleration(IMUdata.acc_x, IMUdata.acc_y, IMUdata.acc_z);
+		IMU.readAcceleration(IMUdata.acc_x, IMUdata.acc_y, IMUdata.acc_z); //this writes to the struct 
 		//Serial.print("Accelerometer sample rate = ");
 		//Serial.print(IMU.accelerationSampleRate());
 		Serial.println("Acc_x = ");
@@ -30,7 +30,7 @@ void loop() {
 	}
 
 	if (IMU.gyroscopeAvailable()) {
-		IMU.readGyroscope(IMUdata.gyr_x, IMUdata.gyr_y, IMUdata.gyr_z);
+		IMU.readGyroscope(IMUdata.gyr_x, IMUdata.gyr_y, IMUdata.gyr_z); //writes to the struct
 		//Serial.print("Gyrosccope sample rate = ");
 		//Serial.print(IMU.gyroscopeSampleRate());
 		Serial.println("Gyr_x = ");
