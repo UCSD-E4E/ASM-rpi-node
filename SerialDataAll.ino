@@ -4,15 +4,6 @@
 short sampleBuffer[256];
 volatile int samplesRead;
 
-struct IMUdata {
-	float acc_x;
-	float acc_y;
-	float acc_z;
-	float gyr_x;
-	float gyr_y;
-	float gyr_z;
-}IMUdata;
-
 
 void setup() {
 	Serial.begin(9600);
@@ -28,28 +19,34 @@ void setup() {
 }
 
 void loop() {
-	if(samplesRead) {
-		for(int i = 0; i < samplesRead; i++) {
-			Serial.write(sampleBuffer[i]);
-		}
-		samplesRead = 0;
-	}
-
+	float accx, accy, accz, gyrx, gyry, gyrz;
 	if (IMU.accelerationAvailable()) {
-		IMU.readAcceleration(IMUdata.acc_x, IMUdata.acc_y, IMUdata.acc_z);
-		Serial.write(IMUdata.acc_x);
-		Serial.write(IMUdata.acc_y);
-		Serial.write(IMUdata.acc_z);
+		IMU.readAcceleration(accx, accy, accz);
+		byte *ax = (byte*) &accx;
+		byte *ay = (byte*) &accy;
+		byte *az = (byte*) &accz;
+		Serial.write(ax, 4);
+		Serial.write(ay, 4);
+		Serial.write(az, 4);
 	}
 
 	if (IMU.gyroscopeAvailable()) {
-		IMU.readGyroscope(IMUdata.gyr_x, IMUdata.gyr_y, IMUdata.gyr_z);
-		Serial.write(IMUdata.gyr_x);
-		Serial.write(IMUdata.gyr_y);
-		Serial.write(IMUdata.gyr_z);
+		IMU.readGyroscope(gyrx, gyry, gyrz);
+		byte *gx = (byte*) &gyrx;
+		byte *gy = (byte*) &gyry;
+		byte *gz = (byte*) &gyrz;
+		Serial.write(gx, 4);
+		Serial.write(gy, 4);
+		Serial.write(gz, 4);
 	}
-
-	delay(9900000000000);
+	
+	if(samplesRead) {
+		for(int j = 0; j < samplesRead; j++) {
+			byte *mic = (byte*) &sampleBuffer[j];
+			Serial.write(mic, sizeof(samplesRead));
+		}
+	}
+	samplesRead = 0;
 }
 
 void onPDMdata() {
