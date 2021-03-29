@@ -6,7 +6,6 @@
 #include <stddef.h>
 
 uint8_t data_circle[64 * 1024];
-
 typedef struct circ_bbuf_
 {
   uint8_t *buffer; //constant pointer to an array of bytes in which the value being pointed to can change but not the pointer (1024 bytes+1 flag)
