@@ -133,7 +133,28 @@ if __name__ == '__main__':
         print('Set the following as your GOOGLE_REFRESH_TOKEN:', refresh_token)
         exit()
 
-    send_mail('--------@gmail.com', '--------@gmail.com',
-              'A mail from you from Python',
-              '<b>A mail from you from Python</b><br><br>' +
-              'So happy to hear from you!')
+class MailAlert:
+    def time_emailalert(self):
+        message = "Error in system: Time Between Sent Arduino Packets Exceeded8 seconds."
+        send_mail('kymiyamo@ucsd.edu','kymiyamo@ucsd.edu',
+                  'E4E Aye-Aye Project: Arduino Error', message)
+        
+    def empty_emailalert(self):
+         message = "Error in system: Packets from Arduino are blank"
+         send_mail('kymiyamo@ucsd.edu','kymiyamo@ucsd.edu',
+                 'E4E Aye-Aye Project: Arduino Error', message)       
+
+    def TFT_restart_emailalert(self):
+         message = "Error in system: TFT screen has restarted itself"
+         send_mail('kymiyamo@ucsd.edu','kymiyamo@ucsd.edu',
+                   'E4E Aye-Aye Project: TFT Screen Restart', message)  
+
+    def serial_connect_emailalert(self):
+        message = "Error in system: Arduino USB connection was lost from RPi"
+        send_mail('kymiyamo@ucsd.edu','kymiyamo@ucsd.edu',
+                   'E4E Aye-Aye Project: Arduino USB connection', message)
+
+    def glances_emailalert(self):
+        message = "Error in system: A system specification reached threshold"
+        send_mail('kymiyamo@ucsd.edu','kymiyamo@ucsd.edu',
+                   'E4E Aye-Aye Project: Glances_Sub, threshold reached', message)
