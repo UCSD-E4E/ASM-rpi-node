@@ -1,7 +1,7 @@
 import yaml
 
 def wifi_config():
-    with open('config.yaml') as configfile: 
+    with open(r'/boot/config.yaml') as configfile: 
         #file1 = yaml.load(configfile, Loader=yaml.FullLoader)
         file1 = yaml.full_load(configfile) #dict type 
         #for key in file1:
