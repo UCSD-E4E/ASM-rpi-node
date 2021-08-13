@@ -1,0 +1,10 @@
+###CHOOSE WHICH UNIT YOU ARE SETTING UP - THIS SETTING DETERMINES THE LAYOUT OF THE SCREEN###
+unit-setup:
+        On_Box: True
+        Remote_Sensor: False 
+
+###ENTER YOUR WIFI CREDENTIALS###
+wifi-setup:
+        ssid: ##Enter Network Name##
+        psw: ##Enter Passwored##
+
