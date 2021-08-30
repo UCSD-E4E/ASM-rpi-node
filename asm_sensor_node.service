@@ -1,0 +1,7 @@
+[Unit]
+Description=ASM Sensor Node
+Requires=network-online.target local-fs.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python3 /usr/local/bin/runSensorNode.py >> /var/log/asm_sensor_node.log 2>&1
