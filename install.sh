@@ -23,9 +23,17 @@ while getopts ":d" arg; do
     esac
 done
 
-if [[ ${DEBUG} -eq 1]]; then
+if [[ ${DEBUG} -eq 1 ]]; then
     python3 -m pip install -e .
 else
     python3 -m pip install .
 fi
 
+if [[ ${DEBUG} -eq 0 ]]
+then
+    cp asm_sensor_node.service /lib/systemd/system/asm_sensor_node.service
+    chmod 644 /lib/systemd/system/asm_sensor_node.service
+    systemctl daemon-reload
+    systemctl enable asm_sensor_node.service
+    echo "ASM Sensor Node will start on next reboot"
+fi
