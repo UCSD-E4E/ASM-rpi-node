@@ -31,9 +31,18 @@ fi
 
 if [[ ${DEBUG} -eq 0 ]]
 then
+    if [ -d /boot ]
+    then
+        if [ ! -f /boot/asm_config.yaml ]
+        then
+            cp test_config.yaml /boot/asm_config.yaml
+        fi
+    fi
+    
     cp asm_sensor_node.service /lib/systemd/system/asm_sensor_node.service
     chmod 644 /lib/systemd/system/asm_sensor_node.service
     systemctl daemon-reload
     systemctl enable asm_sensor_node.service
     echo "ASM Sensor Node will start on next reboot"
+
 fi
