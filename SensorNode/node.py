@@ -1,3 +1,4 @@
+from SensorNode import sensor_nodes
 import os
 import platform
 import socket
@@ -5,14 +6,21 @@ import uuid
 from typing import Type, Set, Dict
 
 import yaml
-from SensorNode.codec import binaryPacket
+from asm_protocol import codec
+import importlib
+import pkgutil
+import time
+import queue
+import select
+import threading
 
-
-class SensorNode:
+class SensorNodeBase:
     config_keys = [
         'uuid',
         'type',
-        'data_server'
+        'data_server',
+        'port',
+        'heartbeat_period_s'
     ]
 
     SENSOR_CLASS = ""
@@ -23,6 +31,7 @@ class SensorNode:
         Args:
             path (str): Path to configuration file
         """
+        self.runState = True
         if platform.system() not in ['posix', 'Linux']:
             raise RuntimeError('Not a Linux box!')
         if path is None:
@@ -42,20 +51,59 @@ class SensorNode:
         except Exception:
             raise RuntimeError("Unable to create uuid from "
                                f"{config_tree['uuid']}")
-        socket.gethostbyname(config_tree['data_server'])
+        self.data_endpoint = socket.gethostbyname(config_tree['data_server'])
         if self.SENSOR_CLASS != "":
             if self.SENSOR_CLASS != config_tree['type']:
                 raise RuntimeError('Invalid sensor class')
+        
+        self.port_number = int(config_tree['port'])
+        self.codec = codec.Codec()
 
-    def sendPacket(self, packet: binaryPacket):
+        self.heartbeat_period = int(config_tree['heartbeat_period_s'])
+
+        self.__packetSendQueue = queue.Queue()
+
+    def sendPacket(self, packet: codec.binaryPacket):
+        self.__packetSendQueue.put(packet)
+
+    def registerPacketHandler(self, packetClass: Type[codec.binaryPacket]):
         pass
 
-    def registerPacketHandler(self, packetClass: Type[binaryPacket]):
-        pass
+    def sendHeartbeatThread(self):
+        heartbeat = codec.E4E_Heartbeat(self.__uuid, uuid.UUID('eff538d8-0ddb-11ec-80d8-5f5c814885d2'))
+        while True:
+            self.sendPacket(heartbeat)
+            print("Sending heartbeat")
+            time.sleep(self.heartbeat_period)
 
     def run(self):
-        while True:
-            pass
+        __heartbeat_thread = threading.Thread(target=self.sendHeartbeatThread)
+        __heartbeat_thread.start()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as data_socket:
+            print(f'Connecting to {self.data_endpoint}:{self.port_number}')
+            data_socket.connect((self.data_endpoint, self.port_number))
+            data_socket.setblocking(False)
+            while self.runState:
+                try:
+                    packets_to_send = []
+                    if not self.__packetSendQueue.empty():
+                        packets_to_send.append(self.__packetSendQueue.get_nowait())
+                        bytes_to_send = self.codec.encode(packets_to_send)
+                        data_socket.sendall(bytes_to_send)
+                except Exception as e:
+                    print(e)
+                    self.runState = False
+                    raise e
+
+                try:
+                    data = data_socket.recv(65536)
+                    self.codec.decode(data)
+                except BlockingIOError:
+                    pass
+                except Exception as e:
+                    print(e)
+                    self.runState = False
+                    raise e
 
 
 def __all_subclasses(cls: Type[object]) -> Set[Type[object]]:
@@ -64,7 +112,16 @@ def __all_subclasses(cls: Type[object]) -> Set[Type[object]]:
     )
 
 
-def runSensorNode(configPath: str) -> SensorNode:
+def iter_namespaces(ns_pkg):
+    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+
+
+def load_plugins():
+    for _, name, _ in iter_namespaces(sensor_nodes):
+        importlib.import_module(name)
+
+
+def runSensorNode(configPath: str) -> SensorNodeBase:
     """Instantiates the proper SensorNode class given the parameters in
     configPath
 
@@ -98,8 +155,10 @@ def runSensorNode(configPath: str) -> SensorNode:
             raise RuntimeError(f'Key "{key}" not found in configuration '
                                'file')
 
-    sensor_node_classes = __all_subclasses(SensorNode)
-    sensor_node_table: Dict[str, Type[SensorNode]] = {
+    load_plugins()
+
+    sensor_node_classes = __all_subclasses(SensorNodeBase)
+    sensor_node_table: Dict[str, Type[SensorNodeBase]] = {
         cls.SENSOR_CLASS: cls for cls in sensor_node_classes}
 
     if config_tree['type'] not in sensor_node_table:

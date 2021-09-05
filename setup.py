@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 import SensorNode
 
 setup(
@@ -7,9 +7,10 @@ setup(
     description='Sensor Node',
     author='UC San Diego Engineers for Exploration',
     author_email='e4e@eng.ucsd.edu',
-    packages=['SensorNode'],
+    packages=find_packages(),
     scripts=['runSensorNode.py'],
     install_requires=[
-        "PyYaml"
+        "PyYaml",
+        'asm_protocol'
     ]
 )
