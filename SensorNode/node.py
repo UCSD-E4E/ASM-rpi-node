@@ -5,7 +5,7 @@ import pkgutil
 import platform
 import socket
 import uuid
-from typing import Callable, Dict, List, Set, Type
+from typing import Awaitable, Callable, Dict, List, Set, Type
 
 import yaml
 from asm_protocol import codec
@@ -19,12 +19,13 @@ class SensorNodeBase:
         'type',
         'data_server',
         'port',
-        'heartbeat_period_s'
+        'heartbeat_period_s',
+        'data_server_uuid'
     ]
 
     SENSOR_CLASS = ""
 
-    def __init__(self, path: str = None):
+    def __init__(self, config_path: str = None):
         """Creates a new SensorNode object
 
         Args:
@@ -33,39 +34,43 @@ class SensorNodeBase:
         self.runState = True
         if platform.system() not in ['posix', 'Linux']:
             raise RuntimeError('Not a Linux box!')
-        if path is None:
-            path = '/boot/asm_config.yaml'
-        if not os.path.exists(path):
-            raise RuntimeError(f'Failed to open {path}')
-        with open(path, 'r') as file_stream:
-            config_tree = yaml.safe_load(stream=file_stream)
-        if config_tree is None:
+        if config_path is None:
+            config_path = '/boot/asm_config.yaml'
+        if not os.path.exists(config_path):
+            raise RuntimeError(f'Failed to open {config_path}')
+        with open(config_path, 'r') as file_stream:
+            self._config_tree = yaml.safe_load(stream=file_stream)
+        if self._config_tree is None:
             raise RuntimeError('Unable to read configuration file')
         for key in self.config_keys:
-            if key not in config_tree:
+            if key not in self._config_tree:
                 raise RuntimeError(f'Key "{key}" not found in configuration '
                                    'file')
         try:
-            self.__uuid = uuid.UUID(config_tree['uuid'])
+            self.__uuid = uuid.UUID(self._config_tree['uuid'])
         except Exception:
             raise RuntimeError("Unable to create uuid from "
-                               f"{config_tree['uuid']}")
-        self.data_endpoint = socket.gethostbyname(config_tree['data_server'])
+                               f"{self._config_tree['uuid']}")
+        endpoint = self._config_tree['data_server']
+        self.data_endpoint = socket.gethostbyname(endpoint)
+        uuid_str = self._config_tree['data_server_uuid']
+        self.data_server_uuid = uuid.UUID(uuid_str)
+
         if self.SENSOR_CLASS != "":
-            if self.SENSOR_CLASS != config_tree['type']:
+            if self.SENSOR_CLASS != self._config_tree['type']:
                 raise RuntimeError('Invalid sensor class')
 
-        self.port_number = int(config_tree['port'])
+        self.port_number = int(self._config_tree['port'])
         self.codec = codec.Codec()
 
-        self.heartbeat_period = int(config_tree['heartbeat_period_s'])
+        self.heartbeat_period = int(self._config_tree['heartbeat_period_s'])
 
         self.__packetSendQueue: asyncio.Queue[codec.binaryPacket] = \
             asyncio.Queue()
 
         self._packet_handlers: Dict[Type[codec.binaryPacket],
                                     List[Callable[[codec.binaryPacket],
-                                                  None]]] = {}
+                                                  Awaitable[None]]]] = {}
 
     async def sendPacket(self, packet: codec.binaryPacket):
         try:
@@ -76,7 +81,8 @@ class SensorNodeBase:
             print("Failed to queue packet")
 
     def registerPacketHandler(self, packetClass: Type[codec.binaryPacket],
-                              callback: Callable[[codec.binaryPacket], None]):
+                              callback: Callable[[codec.binaryPacket],
+                                                 Awaitable[None]]):
         if packetClass not in self._packet_handlers:
             self._packet_handlers[packetClass] = [callback]
         else:
@@ -108,14 +114,21 @@ class SensorNodeBase:
                     for handler in self._packet_handlers[type(packet)]:
                         handler(packet)
 
-    async def run(self):
+    async def setup(self):
+        pass
+
+    def run(self):
+        asyncio.run(self.do_networking())
+        print('tasks done')
+
+    async def do_networking(self):
         self.reader, self.writer = await \
             asyncio.open_connection(self.data_endpoint, self.port_number)
         heartbeat = asyncio.create_task(self.sendHeartbeat())
         receiver = asyncio.create_task(self.__receiver())
         sender = asyncio.create_task(self.__sender())
-        await asyncio.wait({receiver, sender, heartbeat})
-        print('tasks done')
+        setup = asyncio.create_task(self.setup())
+        await asyncio.wait({receiver, sender, heartbeat, setup})
 
 
 def __all_subclasses(cls: Type[object]) -> Set[Type[object]]:
