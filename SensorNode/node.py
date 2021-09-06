@@ -1,18 +1,17 @@
-from SensorNode import sensor_nodes
+import asyncio
+import importlib
 import os
+import pkgutil
 import platform
 import socket
 import uuid
-from typing import Type, Set, Dict
+from typing import Callable, Dict, List, Set, Type
 
 import yaml
 from asm_protocol import codec
-import importlib
-import pkgutil
-import time
-import queue
-import select
-import threading
+
+from SensorNode import sensor_nodes
+
 
 class SensorNodeBase:
     config_keys = [
@@ -55,55 +54,68 @@ class SensorNodeBase:
         if self.SENSOR_CLASS != "":
             if self.SENSOR_CLASS != config_tree['type']:
                 raise RuntimeError('Invalid sensor class')
-        
+
         self.port_number = int(config_tree['port'])
         self.codec = codec.Codec()
 
         self.heartbeat_period = int(config_tree['heartbeat_period_s'])
 
-        self.__packetSendQueue = queue.Queue()
+        self.__packetSendQueue: asyncio.Queue[codec.binaryPacket] = \
+            asyncio.Queue()
 
-    def sendPacket(self, packet: codec.binaryPacket):
-        self.__packetSendQueue.put(packet)
+        self._packet_handlers: Dict[Type[codec.binaryPacket],
+                                    List[Callable[[codec.binaryPacket],
+                                                  None]]] = {}
 
-    def registerPacketHandler(self, packetClass: Type[codec.binaryPacket]):
-        pass
+    async def sendPacket(self, packet: codec.binaryPacket):
+        try:
+            await self.__packetSendQueue.put(packet)
+            print('Queued packet')
+            print(self.__packetSendQueue.qsize())
+        except Exception:
+            print("Failed to queue packet")
 
-    def sendHeartbeatThread(self):
-        heartbeat = codec.E4E_Heartbeat(self.__uuid, uuid.UUID('eff538d8-0ddb-11ec-80d8-5f5c814885d2'))
+    def registerPacketHandler(self, packetClass: Type[codec.binaryPacket],
+                              callback: Callable[[codec.binaryPacket], None]):
+        if packetClass not in self._packet_handlers:
+            self._packet_handlers[packetClass] = [callback]
+        else:
+            self._packet_handlers[packetClass].append(callback)
+
+    async def sendHeartbeat(self):
         while True:
-            self.sendPacket(heartbeat)
-            print("Sending heartbeat")
-            time.sleep(self.heartbeat_period)
+            heartbeat = codec.E4E_Heartbeat(self.__uuid, self.__uuid)
+            await self.sendPacket(heartbeat)
+            await asyncio.sleep(self.heartbeat_period)
 
-    def run(self):
-        __heartbeat_thread = threading.Thread(target=self.sendHeartbeatThread)
-        __heartbeat_thread.start()
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as data_socket:
-            print(f'Connecting to {self.data_endpoint}:{self.port_number}')
-            data_socket.connect((self.data_endpoint, self.port_number))
-            data_socket.setblocking(False)
-            while self.runState:
-                try:
-                    packets_to_send = []
-                    if not self.__packetSendQueue.empty():
-                        packets_to_send.append(self.__packetSendQueue.get_nowait())
-                        bytes_to_send = self.codec.encode(packets_to_send)
-                        data_socket.sendall(bytes_to_send)
-                except Exception as e:
-                    print(e)
-                    self.runState = False
-                    raise e
+    async def __sender(self):
+        while True:
+            try:
+                packet_to_send = self.__packetSendQueue.get_nowait()
+                bytes_to_send = self.codec.encode([packet_to_send])
+                self.writer.write(bytes_to_send)
+                await self.writer.drain()
+            except asyncio.queues.QueueEmpty:
+                await asyncio.sleep(0)
+                continue
 
-                try:
-                    data = data_socket.recv(65536)
-                    self.codec.decode(data)
-                except BlockingIOError:
-                    pass
-                except Exception as e:
-                    print(e)
-                    self.runState = False
-                    raise e
+    async def __receiver(self):
+        while True:
+            bytes_received = await self.reader.read(65536)
+            packets_received = self.codec.decode(bytes_received)
+            for packet in packets_received:
+                if type(packet) in self._packet_handlers:
+                    for handler in self._packet_handlers[type(packet)]:
+                        handler(packet)
+
+    async def run(self):
+        self.reader, self.writer = await \
+            asyncio.open_connection(self.data_endpoint, self.port_number)
+        heartbeat = asyncio.create_task(self.sendHeartbeat())
+        receiver = asyncio.create_task(self.__receiver())
+        sender = asyncio.create_task(self.__sender())
+        await asyncio.wait({receiver, sender, heartbeat})
+        print('tasks done')
 
 
 def __all_subclasses(cls: Type[object]) -> Set[Type[object]]:
@@ -159,7 +171,8 @@ def runSensorNode(configPath: str) -> SensorNodeBase:
 
     sensor_node_classes = __all_subclasses(SensorNodeBase)
     sensor_node_table: Dict[str, Type[SensorNodeBase]] = {
-        cls.SENSOR_CLASS: cls for cls in sensor_node_classes}
+        cls.SENSOR_CLASS: cls for cls in sensor_node_classes
+        if issubclass(cls, SensorNodeBase)}
 
     if config_tree['type'] not in sensor_node_table:
         raise RuntimeError(f'Unknown sensor type {config_tree["type"]}')
