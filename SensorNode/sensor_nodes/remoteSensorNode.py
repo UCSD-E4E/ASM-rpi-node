@@ -38,7 +38,7 @@ class RemoteSensorNode(node.SensorNodeBase):
         self.__running = True
 
     async def setup(self):
-        command = codec.E4E_START_RTP_CMD(self.__uuid, self.data_server_uuid)
+        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid)
         await self.sendPacket(command)
         return await super().setup()
 
@@ -56,6 +56,6 @@ class RemoteSensorNode(node.SensorNodeBase):
                                                      stderr=proc_err)
         await proc.wait()
         if self.__running:
-            restart_cmd = codec.E4E_START_RTP_CMD(self.__uuid,
+            restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
                                                   self.data_server_uuid)
             await self.sendPacket(restart_cmd)
