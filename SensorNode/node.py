@@ -47,7 +47,7 @@ class SensorNodeBase:
                 raise RuntimeError(f'Key "{key}" not found in configuration '
                                    'file')
         try:
-            self.__uuid = uuid.UUID(self._config_tree['uuid'])
+            self.uuid = uuid.UUID(self._config_tree['uuid'])
         except Exception:
             raise RuntimeError("Unable to create uuid from "
                                f"{self._config_tree['uuid']}")
@@ -90,7 +90,7 @@ class SensorNodeBase:
 
     async def sendHeartbeat(self):
         while True:
-            heartbeat = codec.E4E_Heartbeat(self.__uuid, self.__uuid)
+            heartbeat = codec.E4E_Heartbeat(self.uuid, self.uuid)
             await self.sendPacket(heartbeat)
             await asyncio.sleep(self.heartbeat_period)
 
