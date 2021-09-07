@@ -112,7 +112,7 @@ class SensorNodeBase:
             for packet in packets_received:
                 if type(packet) in self._packet_handlers:
                     for handler in self._packet_handlers[type(packet)]:
-                        handler(packet)
+                        await handler(packet)
 
     async def setup(self):
         pass

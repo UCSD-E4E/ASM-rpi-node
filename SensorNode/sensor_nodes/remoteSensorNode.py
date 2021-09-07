@@ -37,6 +37,9 @@ class RemoteSensorNode(node.SensorNodeBase):
 
         self.__running = True
 
+        self.registerPacketHandler(codec.E4E_START_RTP_RSP,
+                                   self.onRTPCommandResponse)
+
     async def setup(self):
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid)
         await self.sendPacket(command)
