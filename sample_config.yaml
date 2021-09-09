@@ -14,7 +14,7 @@ uuid: 12345678-abcd-1234-abcd-123456789abc
 # 
 # This is the device type.  Use this field to configure the behavior of the
 # device.  See the available options in SensorNode.sensor_nodes.
-type: ASM_NestingBox
+type: ''
 
 # Data Server
 # 
@@ -42,7 +42,7 @@ heartbeat_period_s: 60
 
 # IP Camera Configuation Block
 # 
-# Include this block to configure the IP Camera.
+# Include this block to configure the IP Camera.  type should be 'IP_Camera'
 # IP_CAMERA:
   # IP Camera IP Address - this is the IP Camera's IP address.
   # address: '192.168.1.0'
@@ -58,5 +58,22 @@ heartbeat_period_s: 60
   # stream
   # password: password
 
-ASM_NESTING_BOX:
-  video_endpoint: /dev/video0
+# Aye-Aye Sleep Monitoring Nesting Box
+#
+# Include this block to configure the Aye-Aye on Box Unit.  type should be 
+# 'ASM_NestingBox'
+# ASM_NESTING_BOX:
+  # Device Endpoint - video device
+  # video_endpoint: /dev/video0
+
+  # Illumination Start Time - start time of illumination for each day in HH:MM
+  # illumination_on: '18:00'
+
+  # Illumination Stop Time - stop time of illumination for each day in HH:MM
+  # illumination_off: '08:00'
+
+  # Illumination level - percentage of max illumination
+  # illumination_level: 90
+
+  # Illumination handle - GPIO pin
+  # illumination_pin: GPIO35
