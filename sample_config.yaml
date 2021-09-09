@@ -14,7 +14,7 @@ uuid: 12345678-abcd-1234-abcd-123456789abc
 # 
 # This is the device type.  Use this field to configure the behavior of the
 # device.  See the available options in SensorNode.sensor_nodes.
-type: IP_Camera
+type: ASM_NestingBox
 
 # Data Server
 # 
@@ -58,3 +58,5 @@ heartbeat_period_s: 60
   # stream
   # password: password
 
+ASM_NESTING_BOX:
+  video_endpoint: /dev/video0
