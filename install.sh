@@ -35,7 +35,7 @@ then
     then
         if [ ! -f /boot/asm_config.yaml ]
         then
-            cp test_config.yaml /boot/asm_config.yaml
+            cp sample_config.yaml /boot/asm_config.yaml
         fi
     fi
     

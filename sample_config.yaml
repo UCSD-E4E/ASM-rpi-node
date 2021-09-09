@@ -1,0 +1,56 @@
+# This is a sample configuration file for the Aye-aye Sleep Monitoring Sensor
+# Node.  Use this as a basis for configuring the Raspberry Pi for the specific
+# deployment environment.
+
+# Device UUID
+# 
+# This is the UUID that uniquely identifies this device and configuration.
+# Nominally, this will be assigned to the device prior to deployment.  This
+# should be unique to the device and deployment - that is, if you move a device,
+# assign it a new UUID.  This is to keep the device tree identifiable.
+uuid: 12345678-abcd-1234-abcd-123456789abc
+
+# Device Type
+# 
+# This is the device type.  Use this field to configure the behavior of the
+# device.  See the available options in SensorNode.sensor_nodes.
+type: IP_Camera
+
+# Data Server
+# 
+# This is the location of the data server.  This can either be a domain name
+# such as e4e-asm.ucsd.edu, or an IP address such as 192.168.1.77
+data_server: 127.0.0.1
+
+# Data Server Port
+# 
+# This is the primary port for the data server.  Refer to the data server
+# configuration.
+port: 9000
+
+# Data Server UUID
+# 
+# This is the UUID of the data server.  This is used to ensure that data is
+# routed correctly on the data server.  Refer to the data server configuration
+# for options.
+data_server_uuid: 00000000-0000-0000-0000-000000000000
+
+# Sensor Node Heartbeat
+# 
+# This is how often the heartbeat packet is sent in seconds.
+heartbeat_period_s: 60
+
+# IP Camera Configuation Block
+# 
+# Include this block to configure the IP Camera.
+IP_CAMERA:
+  # IP Camera IP Address - this is the IP Camera's IP address.
+  address: '192.168.1.0'
+  # RTSP port - this is the RTSP port for the IP Camera.
+  port: 554
+  # IP Camera username - This is the username to access the IP camera's RTSP
+  # stream
+  user: username
+  # IP camera password - This is the password to access the IP camera's RTSP
+  # stream
+  password: password
