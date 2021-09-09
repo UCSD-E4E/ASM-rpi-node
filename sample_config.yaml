@@ -43,14 +43,18 @@ heartbeat_period_s: 60
 # IP Camera Configuation Block
 # 
 # Include this block to configure the IP Camera.
-IP_CAMERA:
+# IP_CAMERA:
   # IP Camera IP Address - this is the IP Camera's IP address.
-  address: '192.168.1.0'
+  # address: '192.168.1.0'
+
   # RTSP port - this is the RTSP port for the IP Camera.
-  port: 554
+  # port: 554
+
   # IP Camera username - This is the username to access the IP camera's RTSP
   # stream
-  user: username
+  # user: username
+
   # IP camera password - This is the password to access the IP camera's RTSP
   # stream
-  password: password
+  # password: password
+
