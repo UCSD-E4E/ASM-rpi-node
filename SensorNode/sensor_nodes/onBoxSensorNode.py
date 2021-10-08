@@ -87,8 +87,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
         endpoint_port = packet.port
-        cmd = (f'ffmpeg -i {self.camera_endpoint} -acodec libmp3lame -ar 11025'
-               f' -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
+        cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
+               f'-vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
         proc_out = asyncio.subprocess.PIPE
         proc_err = asyncio.subprocess.PIPE
         proc = await asyncio.create_subprocess_shell(cmd,
