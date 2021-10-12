@@ -89,7 +89,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
         if packet.streamID == 1:
             endpoint_port = packet.port
             cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
-                f'-vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
+                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
             proc = await asyncio.create_subprocess_shell(cmd,
