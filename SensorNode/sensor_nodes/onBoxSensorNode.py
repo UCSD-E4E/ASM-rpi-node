@@ -80,22 +80,26 @@ class OnBoxSensorNode(node.SensorNodeBase):
         loop = asyncio.get_event_loop()
         loop.create_task(self.turnLEDOff())
         loop.create_task(self.turnLEDOn())
-        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid)
+        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
         return await super().setup()
 
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
-        endpoint_port = packet.port
-        cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
-               f'-vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
-        proc_out = asyncio.subprocess.PIPE
-        proc_err = asyncio.subprocess.PIPE
-        proc = await asyncio.create_subprocess_shell(cmd,
-                                                     stdout=proc_out,
-                                                     stderr=proc_err)
-        await proc.wait()
-        if self.__running:
-            restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
-                                                  self.data_server_uuid)
-            await self.sendPacket(restart_cmd)
+        if packet.streamID == 1:
+            endpoint_port = packet.port
+            cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
+                f'-vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
+            proc_out = asyncio.subprocess.PIPE
+            proc_err = asyncio.subprocess.PIPE
+            proc = await asyncio.create_subprocess_shell(cmd,
+                                                        stdout=proc_out,
+                                                        stderr=proc_err)
+            await proc.wait()
+            if self.__running:
+                restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
+                                                    self.data_server_uuid, 1)
+                await self.sendPacket(restart_cmd)
+        elif packet.streamID == 2:
+            # set up audio streaming
+            pass
