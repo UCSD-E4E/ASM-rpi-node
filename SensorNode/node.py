@@ -72,7 +72,7 @@ class SensorNodeBase:
                                     List[Callable[[codec.binaryPacket],
                                                   Awaitable[None]]]] = {}
 
-    async def sendPacket(self, packet: codec.binaryPacket):
+    async def sendPacket(self, packet: codec.binaryPacket) -> None:
         try:
             await self.__packetSendQueue.put(packet)
             print('Queued packet')
@@ -82,13 +82,13 @@ class SensorNodeBase:
 
     def registerPacketHandler(self, packetClass: Type[codec.binaryPacket],
                               callback: Callable[[codec.binaryPacket],
-                                                 Awaitable[None]]):
+                                                 Awaitable[None]]) -> None:
         if packetClass not in self._packet_handlers:
             self._packet_handlers[packetClass] = [callback]
         else:
             self._packet_handlers[packetClass].append(callback)
 
-    async def sendHeartbeat(self):
+    async def sendHeartbeat(self) -> None:
         while True:
             heartbeat = codec.E4E_Heartbeat(self.uuid, self.uuid)
             await self.sendPacket(heartbeat)
@@ -146,7 +146,7 @@ def load_plugins():
         importlib.import_module(name)
 
 
-def runSensorNode(configPath: str) -> SensorNodeBase:
+def createSensorNode(configPath: str) -> SensorNodeBase:
     """Instantiates the proper SensorNode class given the parameters in
     configPath
 
