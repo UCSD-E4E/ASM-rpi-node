@@ -39,8 +39,6 @@ class OnBoxSensorNode(node.SensorNodeBase):
         self.camera_endpoint = sensor_params['video_endpoint']
         assert(isinstance(self.camera_endpoint, str))
 
-        self.__running = True
-
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
 
@@ -77,9 +75,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
             self.led.value = 0
 
     async def setup(self):
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.turnLEDOff())
-        loop.create_task(self.turnLEDOn())
+        asyncio.create_task(self.turnLEDOff())
+        asyncio.create_task(self.turnLEDOn())
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
         return await super().setup()
@@ -96,10 +93,11 @@ class OnBoxSensorNode(node.SensorNodeBase):
                                                         stdout=proc_out,
                                                         stderr=proc_err)
             await proc.wait()
-            if self.__running:
+            if self.running:
                 restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
                                                     self.data_server_uuid, 1)
                 await self.sendPacket(restart_cmd)
         elif packet.streamID == 2:
             # set up audio streaming
+            packet.
             pass

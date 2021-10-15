@@ -14,7 +14,7 @@ from SensorNode import sensor_nodes
 
 
 class SensorNodeBase:
-    config_keys = [
+    __config_keys = [
         'uuid',
         'type',
         'data_server',
@@ -42,7 +42,7 @@ class SensorNodeBase:
             self._config_tree = yaml.safe_load(stream=file_stream)
         if self._config_tree is None:
             raise RuntimeError('Unable to read configuration file')
-        for key in self.config_keys:
+        for key in self.__config_keys:
             if key not in self._config_tree:
                 raise RuntimeError(f'Key "{key}" not found in configuration '
                                    'file')
@@ -71,6 +71,7 @@ class SensorNodeBase:
         self._packet_handlers: Dict[Type[codec.binaryPacket],
                                     List[Callable[[codec.binaryPacket],
                                                   Awaitable[None]]]] = {}
+        self.running = True
 
     async def sendPacket(self, packet: codec.binaryPacket) -> None:
         try:
@@ -118,10 +119,10 @@ class SensorNodeBase:
         pass
 
     def run(self):
-        asyncio.run(self.do_networking())
+        asyncio.run(self.__do_networking())
         print('tasks done')
 
-    async def do_networking(self):
+    async def __do_networking(self):
         self.reader, self.writer = await \
             asyncio.open_connection(self.data_endpoint, self.port_number)
         heartbeat = asyncio.create_task(self.sendHeartbeat())
