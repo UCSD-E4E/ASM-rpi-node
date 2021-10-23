@@ -52,31 +52,22 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 sensor_params['illumination_off'])
             self.led_value: float = sensor_params['illumination_level'] / 100
 
-    async def turnLEDOn(self):
-        while self.led:
-            targetTime = dt.datetime.combine(dt.date.today(), self.led_on)
-            now = dt.datetime.now()
-            if targetTime < now:
-                targetTime += dt.timedelta(days=1)
-
-            sleep_time = (targetTime - now).total_seconds()
-            await asyncio.sleep(sleep_time)
-            self.led.value = self.led_value
-
-    async def turnLEDOff(self):
-        while self.led:
-            targetTime = dt.datetime.combine(dt.date.today(), self.led_off)
-            now = dt.datetime.now()
-            if targetTime < now:
-                targetTime += dt.timedelta(days=1)
-
-            sleep_time = (targetTime - now).total_seconds()
-            await asyncio.sleep(sleep_time)
-            self.led.value = 0
+    async def LEDTask(self):
+        while self.led is not None:
+            while self.running:
+                now = dt.datetime.now()
+                on_time = dt.datetime.combine(dt.date.today(), self.led_on)
+                off_time = dt.datetime.combine(dt.date.today(), self.led_off)
+                ordered_time = {on_time: self.led_value, off_time: 0}
+                current_state = ordered_time[min(on_time, off_time)]
+                for threshold_time in sorted(ordered_time.keys()):
+                    if now > threshold_time:
+                        current_state = ordered_time[threshold_time]
+                self.led.value = current_state
+                await asyncio.sleep(60)
 
     async def setup(self):
-        asyncio.create_task(self.turnLEDOff())
-        asyncio.create_task(self.turnLEDOn())
+        asyncio.create_task(self.LEDTask())
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
         return await super().setup()
