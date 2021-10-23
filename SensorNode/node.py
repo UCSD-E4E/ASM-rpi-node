@@ -144,7 +144,10 @@ def iter_namespaces(ns_pkg):
 
 def load_plugins():
     for _, name, _ in iter_namespaces(sensor_nodes):
-        importlib.import_module(name)
+        try:
+            importlib.import_module(name)
+        except:
+            print(f"Failed to import {name}")
 
 
 def createSensorNode(configPath: str) -> SensorNodeBase:

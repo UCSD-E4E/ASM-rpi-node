@@ -59,12 +59,12 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 on_time = dt.datetime.combine(dt.date.today(), self.led_on)
                 off_time = dt.datetime.combine(dt.date.today(), self.led_off)
                 ordered_time = {on_time: self.led_value, off_time: 0}
-                current_state = ordered_time[min(on_time, off_time)]
+                current_state = ordered_time[max(on_time, off_time)]
                 for threshold_time in sorted(ordered_time.keys()):
                     if now > threshold_time:
                         current_state = ordered_time[threshold_time]
                 self.led.value = current_state
-                await asyncio.sleep(60)
+                await asyncio.sleep(30)
 
     async def setup(self):
         asyncio.create_task(self.LEDTask())
@@ -90,5 +90,4 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 await self.sendPacket(restart_cmd)
         elif packet.streamID == 2:
             # set up audio streaming
-            packet.
             pass
