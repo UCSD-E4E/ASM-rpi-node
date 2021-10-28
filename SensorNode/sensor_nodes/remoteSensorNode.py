@@ -35,22 +35,21 @@ class RemoteSensorNode(node.SensorNodeBase):
         self.ip_camera_port = ip_camera_params['port']
         assert(isinstance(self.ip_camera_port, int))
 
-        self.__running = True
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
 
     async def setup(self):
-        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid)
+        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
         return await super().setup()
 
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
         endpoint_port = packet.port
-        cmd = (f'ffmpeg -i rtsp://{self.ip_camera_user}:'
+        cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i rtsp://{self.ip_camera_user}:'
                f'{self.ip_camera_password}@{self.ip_camera_address}:'
-               f'{self.ip_camera_port}/live.sdp -acodec libmp3lame -ar 11025 '
+               f'{self.ip_camera_port}/live.sdp -acodec libmp3lame -ar 11025 -vcodec copy '
                f'-f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
         proc_out = asyncio.subprocess.PIPE
         proc_err = asyncio.subprocess.PIPE
@@ -58,7 +57,7 @@ class RemoteSensorNode(node.SensorNodeBase):
                                                      stdout=proc_out,
                                                      stderr=proc_err)
         await proc.wait()
-        if self.__running:
+        if self.running:
             restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
-                                                  self.data_server_uuid)
+                                                  self.data_server_uuid, packet.streamID)
             await self.sendPacket(restart_cmd)
