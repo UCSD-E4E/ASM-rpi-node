@@ -1,0 +1,45 @@
+@startuml ASM Sensor Node Architecture
+class SensorNodeBase{
+    + List[str] config_keys
+    + str SENSOR_CLASS
+    - async __sender() -> None
+    - async __receiver() -> None
+    + __init__(config_path: str = None) -> None
+    + async sendPacket(packet: asm_protocol.codec.binaryPacket) -> None
+    + registerPacketHandler(packetClass: Type[codec.binaryPacket], callback: Callable[[codec.binaryPacket], Awaitable[None]]) -> None
+    + async sendHeartbeat() -> None
+    + async setup() -> None
+    + run() -> None
+    + async do_networking() -> None
+}
+
+class onBoxSensorNode{
+    + str SENSOR_CLASS
+    + Dict[str, Union[Type, Tuple[Type, Type]]] NESTING_BOX_KEYS
+    + __init__(config_path: str) -> None
+    + async turnLEDOn() -> None
+    + async turnLEDOff() -> None
+    + async setup() -> None
+    + async onRTPCommandResponse(packet: asm_protocol.codec.binaryPacket)
+}
+
+class RemoteSensorNode{
+    + str SENSOR_CLASS
+    + Dict[str, Type] IP_CAMERA_KEYS
+    + __init__(config_path: str) -> None
+    + async setup() -> None
+    + async onRTPCommandResponse(packet: asm_protocol.codec.binaryPacket)
+}
+SensorNodeBase <-- onBoxSensorNode
+SensorNodeBase <-- RemoteSensorNode
+@enduml
+@startuml ASM Sensor Node Sequence
+SensorNode -> Python : runSensorNode.py
+Python -> node.py : runSensorNode()
+node.py -> node.py : load_plugins()
+node.py -> NODE : __init__()
+NODE -> NODE.__init__ : loadConfig()
+NODE.__init__ -> NODE.__init__ : subclass config
+node.__init__ --> node.py
+node.py --> NODE
+@enduml
