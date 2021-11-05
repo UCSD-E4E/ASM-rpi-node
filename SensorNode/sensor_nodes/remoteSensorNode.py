@@ -47,7 +47,7 @@ class RemoteSensorNode(node.SensorNodeBase):
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
         endpoint_port = packet.port
-        cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i rtsp://{self.ip_camera_user}:'
+        cmd = (f'ffmpeg -i rtsp://{self.ip_camera_user}:'
                f'{self.ip_camera_password}@{self.ip_camera_address}:'
                f'{self.ip_camera_port}/live.sdp -acodec libmp3lame -ar 11025 -vcodec copy '
                f'-f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
