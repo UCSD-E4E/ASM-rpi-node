@@ -4,6 +4,7 @@ import os
 import pkgutil
 import platform
 import socket
+import time
 import uuid
 from typing import Awaitable, Callable, Dict, List, Set, Type
 
@@ -52,7 +53,12 @@ class SensorNodeBase:
             raise RuntimeError("Unable to create uuid from "
                                f"{self._config_tree['uuid']}")
         endpoint = self._config_tree['data_server']
-        self.data_endpoint = socket.gethostbyname(endpoint)
+        self.data_endpoint = None
+        while self.data_endpoint is None:
+            try:
+                self.data_endpoint = socket.gethostbyname(endpoint)
+            except:
+                time.sleep(1)
         uuid_str = self._config_tree['data_server_uuid']
         self.data_server_uuid = uuid.UUID(uuid_str)
 
