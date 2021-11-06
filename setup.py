@@ -11,6 +11,8 @@ setup(
     scripts=['runSensorNode.py'],
     install_requires=[
         "PyYaml",
-        'asm_protocol'
+        'asm_protocol',
+        'bandit',
+        'mypy'
     ]
 )
