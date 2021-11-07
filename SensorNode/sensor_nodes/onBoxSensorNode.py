@@ -2,6 +2,8 @@ import asyncio
 import datetime as dt
 import sys
 from typing import Dict, Optional, Tuple, Type, Union
+import os
+import shutil
 
 from asm_protocol import codec
 from SensorNode import node
@@ -38,6 +40,10 @@ class OnBoxSensorNode(node.SensorNodeBase):
                                    'instead!')
         self.camera_endpoint = sensor_params['video_endpoint']
         assert(isinstance(self.camera_endpoint, str))
+        if self.camera_endpoint.startswith('/') and not os.path.exists(self.camera_endpoint):
+            raise RuntimeError(f"Unable to find endpoint {self.camera_endpoint}")
+        if shutil.which('ffmpeg') is None:
+            raise RuntimeError('Unable to find ffmpeg in PATH!')
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
