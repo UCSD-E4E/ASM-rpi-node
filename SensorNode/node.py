@@ -77,7 +77,7 @@ class SensorNodeBase:
         self._packet_handlers: Dict[Type[codec.binaryPacket],
                                     List[Callable[[codec.binaryPacket],
                                                   Awaitable[None]]]] = {}
-        self.running = True
+        self.running: bool = True
 
     async def sendPacket(self, packet: codec.binaryPacket) -> None:
         try:
