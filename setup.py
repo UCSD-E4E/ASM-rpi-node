@@ -1,5 +1,23 @@
 from setuptools import setup, find_packages
 import SensorNode
+import os
+
+default_requires = [
+        "PyYaml",
+        'asm_protocol',
+        'bandit',
+        'mypy',
+]
+
+pi_requires = [
+    'gpiozero'
+]
+
+if os.path.exists('/sys/firmware/devicetree/base/model'):
+    with open('/sys/firmware/devicetree/base/model', 'r') as model:
+        pi_name = model.read()
+        if pi_name.find('Raspberry Pi') != -1:
+            default_requires.extend(pi_requires)
 
 setup(
     name='SensorNode',
@@ -10,9 +28,6 @@ setup(
     packages=find_packages(),
     scripts=['runSensorNode.py'],
     install_requires=[
-        "PyYaml",
-        'asm_protocol',
-        'bandit',
-        'mypy'
+        default_requires
     ]
 )
