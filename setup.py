@@ -10,7 +10,8 @@ default_requires = [
 ]
 
 pi_requires = [
-    'gpiozero'
+    'gpiozero',
+    'rpi.gpio'
 ]
 
 if os.path.exists('/sys/firmware/devicetree/base/model'):

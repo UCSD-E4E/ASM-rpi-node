@@ -22,7 +22,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
         'illumination_on': str,
         'illumination_off': str,
         'illumination_level': (int, float),
-        'illumination_pin': str
+        'illumination_pin': int
     }
 
     def __init__(self, config_path: str):
