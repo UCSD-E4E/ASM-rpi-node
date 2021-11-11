@@ -9,4 +9,4 @@ sudo python3 -m pip install .
 cd ..
 cd ASM-rpi-node
 sudo ./install.sh
-vim /boot/asm_config.yaml
+sudo vim /boot/asm_config.yaml
