@@ -10,7 +10,8 @@ default_requires = [
 ]
 
 pi_requires = [
-    'gpiozero'
+    'gpiozero',
+    'smbus'
 ]
 
 if os.path.exists('/sys/firmware/devicetree/base/model'):
