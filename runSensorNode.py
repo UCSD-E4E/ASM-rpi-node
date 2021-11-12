@@ -2,6 +2,7 @@
 import os
 import appdirs
 import logging
+import logging.handlers
 import pathlib
 
 from SensorNode.node import createSensorNode
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     # Log to root to begin
     root_logger.setLevel(logging.DEBUG)
 
-    log_file_handler = logging.FileHandler(log_dest)
+    log_file_handler = logging.handlers.RotatingFileHandler(log_dest, maxBytes=5*1024*1024, backupCount=5)
     log_file_handler.setLevel(logging.DEBUG)
 
     root_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
