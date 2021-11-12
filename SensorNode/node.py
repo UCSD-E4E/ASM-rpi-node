@@ -27,29 +27,34 @@ class SensorNodeBase:
 
     SENSOR_CLASS = ""
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str):
         """Creates a new SensorNode object
 
         Args:
             path (str): Path to configuration file
         """
-        self.runState = True
+        self._log = logging.getLogger(self.__class__.__name__)
         if platform.system() not in ['posix', 'Linux']:
             raise RuntimeError('Not a Linux box!')
-        if config_path is None:
-            config_path = '/boot/asm_config.yaml'
+
         if not os.path.exists(config_path):
             raise RuntimeError(f'Failed to open {config_path}')
+
+        self._log.info("Loading configuration")
         with open(config_path, 'r') as file_stream:
             self._config_tree = yaml.safe_load(stream=file_stream)
+
         if self._config_tree is None:
             raise RuntimeError('Unable to read configuration file')
         for key in self.__config_keys:
             if key not in self._config_tree:
                 raise RuntimeError(f'Key "{key}" not found in configuration '
                                    'file')
+            self._log.info(f"Discovered {key}: {self._config_tree[key]}")
+
         try:
             self.uuid = uuid.UUID(self._config_tree['uuid'])
+            self._log.info(f"I am {self.uuid}")
         except Exception:
             raise RuntimeError("Unable to create uuid from "
                                f"{self._config_tree['uuid']}")
@@ -62,12 +67,13 @@ class SensorNodeBase:
                 time.sleep(1)
         uuid_str = self._config_tree['data_server_uuid']
         self.data_server_uuid = uuid.UUID(uuid_str)
+        self.port_number = int(self._config_tree['port'])
+        self._log.info(f"Resolving endpoint as {self.data_endpoint}, UUID: {self.data_server_uuid}")
 
         if self.SENSOR_CLASS != "":
             if self.SENSOR_CLASS != self._config_tree['type']:
                 raise RuntimeError('Invalid sensor class')
 
-        self.port_number = int(self._config_tree['port'])
         self.codec = codec.Codec()
 
         self.heartbeat_period = int(self._config_tree['heartbeat_period_s'])
@@ -77,17 +83,18 @@ class SensorNodeBase:
 
         self._packet_handlers: Dict[Type[codec.binaryPacket],
                                     List[Callable[[codec.binaryPacket],
-                                                  Awaitable[None]]]] = {}
+                                                 Awaitable[None]]]] = {}
+        self._log.info("Codecs initialized")
+
         self.running: bool = True
 
     async def sendPacket(self, packet: codec.binaryPacket) -> None:
         try:
             await self.__packetSendQueue.put(packet)
-            print('Queued packet')
-            logging.info(f"Queued Packet {packet}")
-            print(self.__packetSendQueue.qsize())
+            self._log.info(f"Queued Packet {packet}")
         except Exception:
             print("Failed to queue packet")
+            self._log.exception("Failed to queue packet!")
 
     def registerPacketHandler(self, packetClass: Type[codec.binaryPacket],
                               callback: Callable[[codec.binaryPacket],
@@ -96,6 +103,7 @@ class SensorNodeBase:
             self._packet_handlers[packetClass] = [callback]
         else:
             self._packet_handlers[packetClass].append(callback)
+        self._log.info(f"Registered {callback} for {packetClass}")
 
     async def sendHeartbeat(self) -> None:
         while True:
@@ -107,6 +115,7 @@ class SensorNodeBase:
         while True:
             try:
                 packet_to_send = self.__packetSendQueue.get_nowait()
+                self._log.info(f'Sending Packet {packet_to_send}')
                 bytes_to_send = self.codec.encode([packet_to_send])
                 self.writer.write(bytes_to_send)
                 await self.writer.drain()
@@ -119,6 +128,7 @@ class SensorNodeBase:
             bytes_received = await self.reader.read(65536)
             packets_received = self.codec.decode(bytes_received)
             for packet in packets_received:
+                self._log.info(f'Received packet {packet}')
                 if type(packet) in self._packet_handlers:
                     for handler in self._packet_handlers[type(packet)]:
                         await handler(packet)
@@ -128,6 +138,7 @@ class SensorNodeBase:
 
     def run(self):
         asyncio.run(self.__do_networking())
+        self._log.info("Tasks completed")
         print('tasks done')
 
     async def __do_networking(self):
@@ -136,6 +147,7 @@ class SensorNodeBase:
         heartbeat = asyncio.create_task(self.sendHeartbeat())
         receiver = asyncio.create_task(self.__receiver())
         sender = asyncio.create_task(self.__sender())
+        self._log.info("Networking tasks created")
         setup = asyncio.create_task(self.setup())
         await asyncio.wait({receiver, sender, heartbeat, setup})
 
@@ -151,11 +163,12 @@ def iter_namespaces(ns_pkg):
 
 
 def load_plugins():
+    logger = logging.getLogger("NodeCreator")
     for _, name, _ in iter_namespaces(sensor_nodes):
         try:
             importlib.import_module(name)
         except:
-            print(f"Failed to import {name}")
+            logger.error(f"Failed to import {name}")
 
 
 def createSensorNode(configPath: str) -> SensorNodeBase:
@@ -172,6 +185,7 @@ def createSensorNode(configPath: str) -> SensorNodeBase:
     Returns:
         SensorNode: SensorNode instance
     """
+    logger = logging.getLogger("NodeCreator")
     config_keys = [
         'uuid',
         'type',
@@ -179,18 +193,23 @@ def createSensorNode(configPath: str) -> SensorNodeBase:
     ]
     if platform.system() not in ['posix', 'Linux']:
         raise RuntimeError('Not a Linux box!')
+
     if configPath is None:
         configPath = '/boot/asm_config.yaml'
+
     if not os.path.exists(configPath):
         raise RuntimeError(f'Failed to open {configPath}')
+
     with open(configPath, 'r') as file_stream:
         config_tree = yaml.safe_load(stream=file_stream)
     if config_tree is None:
         raise RuntimeError('Unable to read configuration file')
+
     for key in config_keys:
         if key not in config_tree:
             raise RuntimeError(f'Key "{key}" not found in configuration '
                                'file')
+        logger.info(f"Discovered {key}: {config_tree[key]}")
 
     load_plugins()
 

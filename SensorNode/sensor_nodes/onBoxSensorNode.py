@@ -1,9 +1,10 @@
 import asyncio
 import datetime as dt
-import sys
-from typing import Dict, Optional, Tuple, Type, Union
+import logging
 import os
 import shutil
+import sys
+from typing import Dict, Optional, Tuple, Type, Union
 
 from asm_protocol import codec
 from SensorNode import node
@@ -11,7 +12,8 @@ from SensorNode import node
 try:
     import gpiozero
 except ImportError:
-    print("Warning: PWM LED will not function!")
+    logging.exception("PWM LED will not function!")
+
 
 
 class OnBoxSensorNode(node.SensorNodeBase):
@@ -38,6 +40,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 raise RuntimeError(f'Expecting {key_type} for ASM_NESTING_BOX.'
                                    f'{key}, got {type(sensor_params[key])} '
                                    'instead!')
+            self._log.info(f'Discovered {key}: {sensor_params[key]}')
         self.camera_endpoint = sensor_params['video_endpoint']
         assert(isinstance(self.camera_endpoint, str))
         if self.camera_endpoint.startswith('/') and not os.path.exists(self.camera_endpoint):
@@ -57,6 +60,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
             self.led_off: dt.time = dt.time.fromisoformat(
                 sensor_params['illumination_off'])
             self.led_value: float = sensor_params['illumination_level'] / 100
+        else:
+            self._log.warn("LED will not function")
 
     async def LEDTask(self):
         while self.led is not None:
