@@ -7,7 +7,8 @@ import pathlib
 
 from SensorNode.node import createSensorNode
 
-if __name__ == '__main__':
+
+def main():
     if os.getuid() == 0:
         log_dest = os.path.join('var', 'log', 'asm_sensor_node.log')
     else:
@@ -44,10 +45,14 @@ if __name__ == '__main__':
 
     try:
         sensor_node = createSensorNode(config_file)
-        try:
-            sensor_node.run()
-        except:
-            root_logger.exception("Failed to run node")
     except:
         root_logger.exception("Failed to create node")
+        return
+
+    try:
+        sensor_node.run()
+    except:
+        root_logger.exception("Failed to run node")
         
+if __name__ == '__main__':
+    main()
