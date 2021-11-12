@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import logging
 import os
 import pkgutil
 import platform
@@ -83,6 +84,7 @@ class SensorNodeBase:
         try:
             await self.__packetSendQueue.put(packet)
             print('Queued packet')
+            logging.info(f"Queued Packet {packet}")
             print(self.__packetSendQueue.qsize())
         except Exception:
             print("Failed to queue packet")
