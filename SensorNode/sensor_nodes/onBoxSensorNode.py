@@ -95,4 +95,14 @@ class OnBoxSensorNode(node.SensorNodeBase):
                                                     self.data_server_uuid, 1)
                 await self.sendPacket(restart_cmd)
         elif packet.streamID == 2:
-            pass
+            endpoint_port = packet.port
+            cmd = (f'ffmpeg -re -f lavfi -i aevalsrc="sin(400*2*PI*t)" -ar 8000 -f mulaw -f rtp rtp:{self.data_endpoint}:{endpoint_port}')
+            proc_out = asyncio.subprocess.PIPE
+            proc_err = asyncio.subprocess.PIPE
+            proc = await asyncio.create_subprocess_shell(cmd, stdout=proc_out, stderr=proc_err)
+
+            await proc.wait()
+            if self.running:
+                restart_cmd = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
+                await self.sendPacket(restart_cmd)
+
