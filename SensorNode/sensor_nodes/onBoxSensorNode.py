@@ -95,5 +95,4 @@ class OnBoxSensorNode(node.SensorNodeBase):
                                                     self.data_server_uuid, 1)
                 await self.sendPacket(restart_cmd)
         elif packet.streamID == 2:
-            # set up audio streaming
             pass
