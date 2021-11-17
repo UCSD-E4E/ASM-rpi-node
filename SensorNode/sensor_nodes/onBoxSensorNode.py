@@ -91,6 +91,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
+            self._log.info(f'Starting ffmpeg with command: {cmd}')
             proc = await asyncio.create_subprocess_shell(cmd,
                                                         stdout=proc_out,
                                                         stderr=proc_err)

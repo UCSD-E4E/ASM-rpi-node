@@ -45,14 +45,14 @@ def main():
 
     try:
         sensor_node = createSensorNode(config_file)
-    except:
-        root_logger.exception("Failed to create node")
+    except Exception as e:
+        root_logger.exception(f"Failed to create node: {e}")
         return
 
     try:
         sensor_node.run()
-    except:
-        root_logger.exception("Failed to run node")
+    except Exception as e:
+        root_logger.exception(f"Failed to run node: {e}")
         
 if __name__ == '__main__':
     main()
