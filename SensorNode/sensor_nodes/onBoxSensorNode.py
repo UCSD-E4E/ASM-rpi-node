@@ -61,7 +61,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 sensor_params['illumination_off'])
             self.led_value: float = sensor_params['illumination_level'] / 100
         else:
-            self._log.warn("LED will not function")
+            self._log.warning("LED will not function")
 
     async def LEDTask(self):
         while self.led is not None:
