@@ -12,7 +12,7 @@ def main():
     if os.getuid() == 0:
         log_dest = os.path.join('var', 'log', 'asm_sensor_node.log')
     else:
-        log_dir = appdirs.user_log_dir('ASM Sensor Node')
+        log_dir = appdirs.user_log_dir('ASMSensorNode')
         pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
         log_dest = os.path.join(log_dir, 'asm_sensor_node.log')
 
