@@ -8,11 +8,12 @@ import socket
 import time
 import uuid
 from typing import Awaitable, Callable, Dict, List, Set, Type
-
+import subprocess
 import yaml
 from asm_protocol import codec
 
 from SensorNode import sensor_nodes
+import SensorNode
 
 
 class SensorNodeBase:
@@ -26,6 +27,12 @@ class SensorNodeBase:
     ]
 
     SENSOR_CLASS = ""
+    def __getRevision(self) -> str:
+        git_rev_parse = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+        git_diff_ret = subprocess.run(['git', 'diff', '--quiet']).returncode
+        if git_diff_ret != 0:
+            git_rev_parse += ' dirty'
+        return git_rev_parse
 
     def __init__(self, config_path: str):
         """Creates a new SensorNode object
@@ -34,6 +41,7 @@ class SensorNodeBase:
             path (str): Path to configuration file
         """
         self._log = logging.getLogger(self.__class__.__name__)
+        self._log.info(f"Starting ASM Sensor Node v{SensorNode.__version__}, {self.__getRevision()}")
         if platform.system() not in ['posix', 'Linux']:
             raise RuntimeError('Not a Linux box!')
 
