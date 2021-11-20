@@ -101,7 +101,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
                 self._log.info("ffmpeg stdout: %s", (await proc.stdout.read()).decode())
             else:
-                self._log.info("ffmpeg shut down with error code %d", retval)
+                self._log.info("ffmpeg returned with code %d", retval)
             if self.running:
                 restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
                                                     self.data_server_uuid, 1)

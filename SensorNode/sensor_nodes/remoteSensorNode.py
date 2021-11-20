@@ -26,6 +26,7 @@ class RemoteSensorNode(node.SensorNodeBase):
                 raise RuntimeError(f'Expecting {key_type} for IP_CAMERA.{key},'
                                    f' got {type(ip_camera_params[key])} '
                                    'instead!')
+            self._log.info(f'Discovered {key}: {ip_camera_params[key]}')
         self.ip_camera_address = ip_camera_params['address']
         assert(isinstance(self.ip_camera_address, str))
         self.ip_camera_user = ip_camera_params['user']
@@ -63,7 +64,7 @@ class RemoteSensorNode(node.SensorNodeBase):
             self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
             self._log.info("ffmpeg stdout: %s", (await proc.stdout.read()).decode())
         else:
-            self._log.info("ffmpeg shut down with error code %d", retval)
+            self._log.info("ffmpeg returned with error code %d", retval)
         if self.running:
             restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
                                                   self.data_server_uuid, packet.streamID)
