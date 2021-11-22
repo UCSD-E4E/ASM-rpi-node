@@ -76,7 +76,7 @@ heartbeat_period_s: 60
   # illumination_level: 90
 
   # Illumination handle - GPIO pin
-  # illumination_pin: GPIO35
+  # illumination_pin: 19
 
 # Aye-Aye Animal Flipper
 #
