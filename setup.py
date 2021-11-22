@@ -7,6 +7,7 @@ default_requires = [
         'asm_protocol',
         'bandit',
         'mypy',
+        'RaspiMotorHat @ git+https://github.com/UCSD-E4E/Raspi-MotorHat@turnOffMotor'
 ]
 
 pi_requires = [
