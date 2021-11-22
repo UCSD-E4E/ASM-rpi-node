@@ -14,13 +14,14 @@ body:
     attributes:
       label: Commit Hash
       description: Current short commit hash
+    validations:
+      required: true
   - type: textarea
     id: reproduce-steps
     attributes:
       label: Steps to Reproduce?
       description: How can we reproduce this bug?
       placeholder: Tell us what you did!
-      value: "1. Step 1"
     validations:
       required: true
   - type: textarea
@@ -29,7 +30,6 @@ body:
       label: Observed Behavior
       description: What erroneous behavior did you observe?
       placeholder: Tell us what you see!
-      value: "A bug happened!"
     validations:
       required: true
   - type: textarea
@@ -38,7 +38,6 @@ body:
       label: Desired Behavior
       description: What behavior did you expect?
       placeholder: Tell us what you wanted to see!
-      value: "A bug happened!"
     validations:
       required: true
   - type: dropdown
