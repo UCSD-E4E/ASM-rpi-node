@@ -44,11 +44,13 @@ body:
     id: component
     attributes:
       label: Component
-      description: Which component were you testing?
+      description: Which component is this bug related to?
       options:
         - Animal Flipper
         - On Box Sensor Node
         - Remote Sensor Node
+        - Base Node
+        - Server
     validations:
       required: true
   - type: textarea
