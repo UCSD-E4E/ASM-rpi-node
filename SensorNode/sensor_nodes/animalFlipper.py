@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Type, Union
 
 from asm_protocol import codec
 from SensorNode import node
-from RaspiMotorHat import Raspi_MotorHAT as Raspi_MotorHAT
+from RaspiMotorHat.Raspi_MotorHAT import Raspi_MotorHAT as Raspi_MotorHAT
 
 class AnimalFlipper(node.SensorNodeBase):
     SENSOR_CLASS = 'ASM_AnimalFlipper'
