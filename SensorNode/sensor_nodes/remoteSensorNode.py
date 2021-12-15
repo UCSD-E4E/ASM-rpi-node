@@ -44,6 +44,18 @@ class RemoteSensorNode(node.SensorNodeBase):
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
         return await super().setup()
+    
+    async def reportOutput(self, stream: asyncio.StreamReader, process_name: str, tag: str, interval: int = 60):
+        while True:
+            self._log.debug("report")
+            output = ""
+            while True:
+                buf = await stream.read(1024)
+                output += buf.decode()
+                if buf == b"":
+                    break
+            self._log.info(f"{process_name} {tag}: {output}")
+            await asyncio.sleep(interval)
 
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
@@ -58,7 +70,12 @@ class RemoteSensorNode(node.SensorNodeBase):
         proc = await asyncio.create_subprocess_shell(cmd,
                                                      stdout=proc_out,
                                                      stderr=proc_err)
+        
+        task_stdout = asyncio.create_task(self.reportOutput(proc.stdout, "ffmpeg", "stdout", 60))
+        task_stderr = asyncio.create_task(self.reportOutput(proc.stderr, "ffmpeg", "stderr", 60))
         retval = await proc.wait()
+        task_stdout.cancel()
+        task_stderr.cancel()
         if retval != 0:
             self._log.warning("ffmpeg shut down with error code %d", retval)
             self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
