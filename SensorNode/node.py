@@ -53,8 +53,8 @@ class SensorNodeBase:
             raise RuntimeError("Unable to create uuid from "
                                f"{self._config_tree['uuid']}")
         endpoint = self._config_tree['data_server']
-        self.data_endpoint = None
-        while self.data_endpoint is None:
+        self.data_endpoint:str = ''
+        while self.data_endpoint == '':
             try:
                 self.data_endpoint = socket.gethostbyname(endpoint)
             except:

@@ -77,3 +77,15 @@ heartbeat_period_s: 60
 
   # Illumination handle - GPIO pin
   # illumination_pin: GPIO35
+
+  # Audio endpoint - select from `asrecord -L`
+  # audio_endpoint: hw:CARD=Device,DEV=0
+
+  # Number of audio channels
+  # audio_channels: 2
+
+  # Audio sampling rate
+  # audio_samplerate: 48000
+
+  # Audio encoding to stream.  MP3 has been tested, use libmp3lame
+  # audio_encoding: libmp3lame
