@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from SensorNode.utils.ffmpeg import MediaOutput
 
 class RTPOutputStream(MediaOutput):
-    def __init__(self, hostname:str, port:int, protocol:str = 'tcp', format:str = 'mpegts'):
+    def __init__(self, hostname:str, port:Optional[int] = None, protocol:str = 'tcp', format:str = 'mpegts'):
         self.__protocol = protocol
         self.__hostname = hostname
         self.__port = port
@@ -40,6 +40,8 @@ class RTPOutputStream(MediaOutput):
         for key, value in self.__video_flags.items():
             opts.append('-' + key)
             opts.append(value)
+        if self.__port is None:
+            raise RuntimeError("Port not set")
         opts.append(f'{self.__protocol}://{self.__hostname}:{self.__port}')
         return opts
 
