@@ -6,7 +6,9 @@ import subprocess
 import os
 
 def test_audio():
-    os.remove('test.mp3')
+    test_time = 30
+    if os.path.isfile('test.mp3'):
+        os.remove('test.mp3')
     rx_ffmpeg = subprocess.Popen(
         ['ffmpeg', '-i', 'tcp://@:8500?listen', '-acodec', 'copy', '-flags', 
          '+global_header', '-reset_timestamps', '1', 'test.mp3']
@@ -15,8 +17,8 @@ def test_audio():
     audio_sink = rtp.RTPOutputStream('127.0.0.1', 8500)
     audio_sink.configure_audio(codec='libmp3lame', rate=48000)
     ffmpeg_config = ffmpeg.FFMPEGInstance(input_obj=audio_source, output_obj=audio_sink)
-    ffmpeg_config.set_time(30)
+    ffmpeg_config.set_time(test_time)
     ffmpeg_cmd = ffmpeg_config.get_command()
     print(ffmpeg_cmd)
     subprocess.check_call(ffmpeg_cmd)
-    assert(rx_ffmpeg.wait(30) == 0)
+    assert(rx_ffmpeg.wait(test_time) == 0)
