@@ -3,7 +3,9 @@ from SensorNode.utils.ffmpeg import MediaOutput
 
 class RTPOutputStream(MediaOutput):
     def __init__(self, hostname:str, port:int, protocol:str = 'tcp', format:str = 'mpegts'):
-        self.__uri = f'{protocol}://{hostname}:{port}'
+        self.__protocol = protocol
+        self.__hostname = hostname
+        self.__port = port
         self.__audio_flags:Dict[str, str] = {}
         self.__video_flags:Dict[str, str] = {'f': format}
 
@@ -38,6 +40,8 @@ class RTPOutputStream(MediaOutput):
         for key, value in self.__video_flags.items():
             opts.append('-' + key)
             opts.append(value)
-        opts.append(self.__uri)
+        opts.append(f'{self.__protocol}://{self.__hostname}:{self.__port}')
         return opts
 
+    def set_port(self, port:int) -> None:
+        self.__port = port
