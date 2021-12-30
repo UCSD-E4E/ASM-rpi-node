@@ -8,9 +8,9 @@ from typing import Dict, Optional, Tuple, Type, Union
 
 from asm_protocol import codec
 from SensorNode import node
-from SensorNode.utils.audio import HWAudioSource
-from SensorNode.utils.ffmpeg import FFMPEGInstance
-from SensorNode.utils.rtp import RTPOutputStream
+import ASM_utils.ffmpeg.audio as audio
+import ASM_utils.ffmpeg.ffmpeg as ffmpeg
+import ASM_utils.ffmpeg.rtp as rtp
 import schema
 try:
     import gpiozero
@@ -47,11 +47,11 @@ class OnBoxSensorNode(node.SensorNodeBase):
         if shutil.which('ffmpeg') is None:
             raise RuntimeError('Unable to find ffmpeg in PATH!')
 
-        self.__audio_source = HWAudioSource(sensor_params['audio_endpoint'],
+        self.__audio_source = audio.HWAudioSource(sensor_params['audio_endpoint'],
                                             num_channels=sensor_params['audio_channels'],
                                             sample_rate=sensor_params['audio_samplerate'])
-        self.__audio_sink = RTPOutputStream(hostname=self.data_endpoint)
-        self.__audio_sink.configure_audio(codec=sensor_params['audio_codec'])
+        self.__audio_sink = rtp.RTPAudioStream(hostname=self.data_endpoint)
+        self.__audio_sink.configure_audio(codec=sensor_params['audio_encoding'])
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
@@ -86,6 +86,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
         asyncio.create_task(self.LEDTask())
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
+        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 2)
+        await self.sendPacket(command)
         return await super().setup()
 
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
@@ -113,13 +115,20 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 await self.sendPacket(restart_cmd)
         elif packet.streamID == 2:
             self.__audio_sink.set_port(packet.port)
-            ffmpeg_config = FFMPEGInstance(input_obj=self.__audio_source, output_obj=self.__audio_sink)
+            ffmpeg_config = ffmpeg.FFMPEGInstance(input_obj=self.__audio_source, output_obj=self.__audio_sink)
             cmd = ' '.join(ffmpeg_config.get_command())
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
+            self._log.info(f'Starting ffmpeg with command: {cmd}')
             proc = await asyncio.create_subprocess_shell(cmd, stdout=proc_out, stderr=proc_err)
 
-            await proc.wait()
+            retval = await proc.wait()
+            if retval != 0:
+                self._log.warning("ffmpeg shut down with error code %d", retval)
+                self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
+                self._log.info("ffmpeg stdout: %s", (await proc.stdout.read()).decode())
+            else:
+                self._log.info("ffmpeg returned with code %d", retval)
             if self.running:
                 restart_cmd = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
                 await self.sendPacket(restart_cmd)

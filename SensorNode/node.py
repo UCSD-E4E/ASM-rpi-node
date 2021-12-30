@@ -145,7 +145,7 @@ class SensorNodeBase:
                 self._log.info(f'Received packet {packet}')
                 if type(packet) in self._packet_handlers:
                     for handler in self._packet_handlers[type(packet)]:
-                        await handler(packet)
+                        asyncio.create_task(handler(packet))
 
     async def setup(self):
         pass
