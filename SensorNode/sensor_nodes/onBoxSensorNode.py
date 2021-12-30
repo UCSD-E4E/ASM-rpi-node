@@ -27,7 +27,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
         'illumination_on': str,
         'illumination_off': str,
         'illumination_level': schema.Or(int, float),
-        'illumination_pin': str,
+        'illumination_pin': int,
         'audio_endpoint': str,
         'audio_channels': int,
         'audio_samplerate': int,
