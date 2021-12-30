@@ -7,11 +7,14 @@ default_requires = [
         'asm_protocol',
         'bandit',
         'mypy',
+        'RaspiMotorHat @ git+https://github.com/UCSD-E4E/Raspi-MotorHat@turnOffMotor',
+        'appdirs',
         'schema',
 ]
 
 pi_requires = [
-    'gpiozero'
+    'gpiozero',
+    'rpi.gpio'
 ]
 
 if os.path.exists('/sys/firmware/devicetree/base/model'):

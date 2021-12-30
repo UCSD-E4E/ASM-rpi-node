@@ -76,7 +76,7 @@ heartbeat_period_s: 60
   # illumination_level: 90
 
   # Illumination handle - GPIO pin
-  # illumination_pin: GPIO35
+  # illumination_pin: 19
 
   # Audio endpoint - select from `asrecord -L`
   # audio_endpoint: hw:CARD=Device,DEV=0
@@ -89,3 +89,35 @@ heartbeat_period_s: 60
 
   # Audio encoding to stream.  MP3 has been tested, use libmp3lame
   # audio_encoding: libmp3lame
+
+# Aye-Aye Animal Flipper
+#
+# Include this block to configure the animal flipper.  Type should be 
+# 'ASM_AnimalFlipper'
+# ASM_AnimalFlipper:
+  # This is the stepper motor number.  Select from 1 or 2
+  # motor: 2
+
+  # This is the total number of steps in one revolution of the motor.
+  # motor_steps: 200
+
+  # This is the desired speed of the motor in rpm.
+  # motor_speed: 10
+
+  # This is the home direction.  This is assumed to be "in".  Select from 1 or 2
+  # home_direction: 1
+
+  # This is the amount of time to remain in the in position
+  # in_time_s: 300
+
+  # This is the number of steps to count going in.
+  # in_steps: 75
+
+  # This is amount of time to remain in the out position
+  # out_time_s: 300
+
+  # This is the number of steps to count going out.
+  # out_steps: 75
+
+  # This is the output file to write to
+  # data_file: /home/pi/flipper.txt

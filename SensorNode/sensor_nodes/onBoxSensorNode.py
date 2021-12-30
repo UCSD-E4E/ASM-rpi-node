@@ -1,9 +1,10 @@
 import asyncio
 import datetime as dt
-import sys
-from typing import Dict, Optional, Tuple, Type, Union
+import logging
 import os
 import shutil
+import sys
+from typing import Dict, Optional, Tuple, Type, Union
 
 from asm_protocol import codec
 from SensorNode import node
@@ -14,7 +15,8 @@ import schema
 try:
     import gpiozero
 except ImportError:
-    print("Warning: PWM LED will not function!")
+    logging.exception("PWM LED will not function!")
+
 
 
 class OnBoxSensorNode(node.SensorNodeBase):
@@ -63,6 +65,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
             self.led_off: dt.time = dt.time.fromisoformat(
                 sensor_params['illumination_off'])
             self.led_value: float = sensor_params['illumination_level'] / 100
+        else:
+            self._log.warning("LED will not function")
 
     async def LEDTask(self):
         while self.led is not None:
@@ -92,10 +96,17 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
+            self._log.info(f'Starting ffmpeg with command: {cmd}')
             proc = await asyncio.create_subprocess_shell(cmd,
                                                         stdout=proc_out,
                                                         stderr=proc_err)
-            await proc.wait()
+            retval = await proc.wait()
+            if retval != 0:
+                self._log.warning("ffmpeg shut down with error code %d", retval)
+                self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
+                self._log.info("ffmpeg stdout: %s", (await proc.stdout.read()).decode())
+            else:
+                self._log.info("ffmpeg returned with code %d", retval)
             if self.running:
                 restart_cmd = codec.E4E_START_RTP_CMD(self.uuid,
                                                     self.data_server_uuid, 1)

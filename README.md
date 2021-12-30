@@ -25,3 +25,19 @@ Aye-Aye Sleep Monitoring Project Raspberry Pi Node
 21. Navigate into `ASM-rpi-node`
 22. Run `sudo ./install.sh`
 23. Edit `/boot/asm_config.yaml` as needed.
+
+# Instructions to Run
+## Development
+1. Open this repository as a VS Code Workspace
+2. Use the Run and Debug menu to execute the server.
+3. In this mode, the server will log to the user log directory.  On Linux, this is usually `${HOME}/.cache/ASMSensorNode/asm_sensor_node.log`.
+## Deployment
+1. Run `sudo ./install.sh`
+2. Run `sudo service asm_sensor_node restart`
+3. In this mode, the server will log to the system log directory.  On Linux, this is usually `/var/log/asm_sensor_node.log`.
+
+# Configuration Files
+1. The Data Server will search the following locations for the `asm_config.yaml` configuration file:
+    - `/boot/asm_config.yaml`
+    - `/usr/local/etc/asm_config.yaml`
+    - `${CWD}`
