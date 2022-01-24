@@ -67,6 +67,11 @@ class AnimalFlipper(node.SensorNodeBase):
                 now = dt.datetime.utcnow().isoformat()
                 data_file.write(f'{now}: out\n')
                 data_file.flush()
+                packet = codec.E4E_Flipper_Data(
+                    direction=codec.E4E_Flipper_Data.OUT,
+                    sourceUUID=self.uuid,
+                    destUUID=self.data_server_uuid)
+                await self.sendPacket(packet)
                 self.motor_hat.turnOffMotors()
                 await asyncio.sleep(self.out_time_s)
 
@@ -74,6 +79,11 @@ class AnimalFlipper(node.SensorNodeBase):
                 now = dt.datetime.utcnow().isoformat()
                 data_file.write(f'{now}: in\n')
                 data_file.flush()
+                packet = codec.E4E_Flipper_Data(
+                    direction=codec.E4E_Flipper_Data.IN,
+                    sourceUUID=self.uuid,
+                    destUUID=self.data_server_uuid)
+                await self.sendPacket(packet)
                 self.motor_hat.turnOffMotors()
                 await asyncio.sleep(self.in_time_s)
 
