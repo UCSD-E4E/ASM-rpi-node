@@ -7,7 +7,8 @@ default_requires = [
         'asm_protocol',
         'bandit',
         'mypy',
-        'appdirs'
+        'appdirs',
+        'schema'
 ]
 
 pi_requires = [
