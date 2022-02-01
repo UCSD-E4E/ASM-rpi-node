@@ -8,7 +8,7 @@ We have designated 3 key labels:
 2. Partial Frame
 3. Out of Frame
 
-This system does have some troubles with accurate locating of the animal, so we shall make effort to always home the arm.
+This system does have some troubles with accurate locating of the animal when the motors are disengaged, so we shall make effort to always home the arm.
 
 The home position is the most "in" frame that the animal can be.  We can find this location by rotating in the home direction for at least `motor_steps`.
 
