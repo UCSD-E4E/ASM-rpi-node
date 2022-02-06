@@ -79,18 +79,20 @@ class AnimalFlipper(node.SensorNodeBase):
             self.in_direction = 2
             self.out_direction = 1
 
+        stage_loiter = 0
+
         self.__phases: List[AnimalFlipper.MotionPhase] = []
         self.__phases.append(AnimalFlipper.MotionPhase(
             steps=flipper_params['out_threshold_steps'],
             direction=self.out_direction,
             label=self.IN_FRAME,
-            loiter=0
+            loiter=stage_loiter
         ))
         self.__phases.append(AnimalFlipper.MotionPhase(
             steps=flipper_params['out_frame_steps'] - flipper_params['out_threshold_steps'],
             direction=self.out_direction,
             label=self.PARTIAL_FRAME,
-            loiter=0
+            loiter=stage_loiter
         ))
         self.__phases.append(AnimalFlipper.MotionPhase(
             steps=flipper_params['safe_steps'] - flipper_params['out_frame_steps'],
@@ -102,16 +104,16 @@ class AnimalFlipper(node.SensorNodeBase):
             steps=flipper_params['safe_steps'] - flipper_params['in_frame_steps'],
             direction=self.in_direction,
             label=self.OUT_FRAME,
-            loiter=0
+            loiter=stage_loiter
         ))
         self.__phases.append(AnimalFlipper.MotionPhase(
             steps=flipper_params['in_frame_steps'] - flipper_params['in_threshold_steps'],
             direction=self.in_direction,
             label=self.PARTIAL_FRAME,
-            loiter=0
+            loiter=stage_loiter
         ))
         self.__phases.append(AnimalFlipper.MotionPhase(
-            steps=flipper_params['in_threshold_steps'] + int(flipper_params['motor_steps'] / 4),
+            steps=flipper_params['in_threshold_steps'] + 10,
             direction=self.in_direction,
             label=self.IN_FRAME,
             loiter=flipper_params['loiter_time_s']
@@ -141,11 +143,17 @@ class AnimalFlipper(node.SensorNodeBase):
         self._log.info("Slewing home")
         if MOTOR_HAT_ENABLED:
             self.stepper.step(self.home_distance, self.home_direction, self.step_mode)
+            # self.stepper.step(15, self.home_direction, self.step_mode)
         else:
             stepper_location = 0
             await asyncio.sleep(self.home_distance * self.__stepper_speed)
-        self._log.info("Home")
         while self.running:
+            if MOTOR_HAT_ENABLED:
+                self.stepper.step(20, self.home_direction, self.step_mode)
+            else:
+                stepper_location = 0
+                await asyncio.sleep(self.home_distance * self.__stepper_speed)
+            self._log.info("Home")
             for i, phase in enumerate(self.__phases):
                 self._log.info(f'Doing phase {i}')
                 await self.writeLabel(phase.label)
@@ -162,6 +170,9 @@ class AnimalFlipper(node.SensorNodeBase):
                         stepper_location = 0
                     self._log.info(f'Stepper now at {stepper_location}')
                 await asyncio.sleep(phase.loiter)
+            if MOTOR_HAT_ENABLED:
+                self.motor_hat.turnOffMotors()
+                await asyncio.sleep(120)
             self._log.info('Home again')
                 
 
