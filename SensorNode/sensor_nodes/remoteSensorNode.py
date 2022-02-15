@@ -1,7 +1,9 @@
 import asyncio
 from SensorNode import node
 from asm_protocol import codec
-
+import os
+import appdirs
+import pathlib
 
 class RemoteSensorNode(node.SensorNodeBase):
     SENSOR_CLASS = 'IP_Camera'
@@ -36,6 +38,11 @@ class RemoteSensorNode(node.SensorNodeBase):
         self.ip_camera_port = ip_camera_params['port']
         assert(isinstance(self.ip_camera_port, int))
 
+        if os.getuid() == 0:
+            self.ff_log_dir = os.path.abspath(os.path.join('var', 'log', 'ffmpeg_logs'))
+        else:
+            self.ff_log_dir = appdirs.user_log_dir('ASMSensorNode')
+        pathlib.Path(self.ff_log_dir).mkdir(parents=True, exist_ok=True)        
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
@@ -44,18 +51,6 @@ class RemoteSensorNode(node.SensorNodeBase):
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
         return await super().setup()
-    
-    async def reportOutput(self, stream: asyncio.StreamReader, process_name: str, tag: str, interval: int = 60):
-        while True:
-            self._log.debug("report")
-            output = ""
-            while True:
-                buf = await stream.read(1024)
-                output += buf.decode()
-                if buf == b"":
-                    break
-            self._log.info(f"{process_name} {tag}: {output}")
-            await asyncio.sleep(interval)
 
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
@@ -63,19 +58,18 @@ class RemoteSensorNode(node.SensorNodeBase):
         cmd = (f'ffmpeg -i rtsp://{self.ip_camera_user}:'
                f'{self.ip_camera_password}@{self.ip_camera_address}:'
                f'{self.ip_camera_port}/live.sdp -acodec libmp3lame -ar 11025 -vcodec copy '
-               f'-f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
+               f'-f mpegts tcp://{self.data_endpoint}:{endpoint_port}'
+               f' 2>&1 | /home/pi/nthui/ASM-rpi-node/split_log {os.path.join(self.ff_log_dir, "ffstats.log")} {os.path.join(self.ff_log_dir, "ffinfo.log")}'
+               )
         proc_out = asyncio.subprocess.PIPE
         proc_err = asyncio.subprocess.PIPE
         self._log.info(f'Starting ffmpeg with command: {cmd}')
+        self._log.info(f"FFmpeg logging to: {self.ff_log_dir}")
         proc = await asyncio.create_subprocess_shell(cmd,
                                                      stdout=proc_out,
                                                      stderr=proc_err)
-        
-        task_stdout = asyncio.create_task(self.reportOutput(proc.stdout, "ffmpeg", "stdout", 60))
-        task_stderr = asyncio.create_task(self.reportOutput(proc.stderr, "ffmpeg", "stderr", 60))
+
         retval = await proc.wait()
-        task_stdout.cancel()
-        task_stderr.cancel()
         if retval != 0:
             self._log.warning("ffmpeg shut down with error code %d", retval)
             self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
