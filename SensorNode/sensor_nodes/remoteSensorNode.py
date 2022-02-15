@@ -41,7 +41,7 @@ class RemoteSensorNode(node.SensorNodeBase):
         if os.getuid() == 0:
             self.ff_log_dir = os.path.abspath(os.path.join('var', 'log', 'ffmpeg_logs'))
         else:
-            self.ff_log_dir = appdirs.user_log_dir('ASMSensorNode')
+            self.ff_log_dir = os.path.join(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
         pathlib.Path(self.ff_log_dir).mkdir(parents=True, exist_ok=True)        
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
