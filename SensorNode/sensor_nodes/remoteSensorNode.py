@@ -2,6 +2,7 @@ import asyncio
 from SensorNode import node
 from asm_protocol import codec
 import os
+import sys
 import appdirs
 import pathlib
 
@@ -39,9 +40,9 @@ class RemoteSensorNode(node.SensorNodeBase):
         assert(isinstance(self.ip_camera_port, int))
 
         if os.getuid() == 0:
-            self.ff_log_dir = os.path.abspath(os.path.join('var', 'log', 'ffmpeg_logs'))
+            self.ff_log_dir = pathlib.Path('var', 'log', 'ffmpeg_logs').absolute()
         else:
-            self.ff_log_dir = os.path.join(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
+            self.ff_log_dir = pathlib.Path(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
         pathlib.Path(self.ff_log_dir).mkdir(parents=True, exist_ok=True)        
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
@@ -55,11 +56,16 @@ class RemoteSensorNode(node.SensorNodeBase):
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
         endpoint_port = packet.port
+        
+        ff_stats_path = pathlib.Path(self.ff_log_dir, "ffstats.log")
+        ff_info_path = pathlib.Path(self.ff_log_dir, "ffinfo.log")
+        script_path = "-m ASM_utils.ffmpeg.split_log"
+
         cmd = (f'ffmpeg -i rtsp://{self.ip_camera_user}:'
                f'{self.ip_camera_password}@{self.ip_camera_address}:'
                f'{self.ip_camera_port}/live.sdp -acodec libmp3lame -ar 11025 -vcodec copy '
                f'-f mpegts tcp://{self.data_endpoint}:{endpoint_port}'
-               f' 2>&1 | /home/pi/nthui/ASM-rpi-node/split_log {os.path.join(self.ff_log_dir, "ffstats.log")} {os.path.join(self.ff_log_dir, "ffinfo.log")}'
+               f' 2>&1 | {sys.executable} {script_path} {ff_stats_path} {ff_info_path}'
                )
         proc_out = asyncio.subprocess.PIPE
         proc_err = asyncio.subprocess.PIPE
