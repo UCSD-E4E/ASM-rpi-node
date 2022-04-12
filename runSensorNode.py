@@ -37,13 +37,16 @@ def main():
     root_logger.addHandler(console_handler)
     logging.Formatter.converter = time.gmtime
 
-    if os.path.isfile('/boot/asm_config.yaml'):
-        config_file = '/boot/asm_config.yaml'
+    if os.path.isfile('asm_config.yaml'):
+        config_file = 'asm_config.yaml'
     elif os.path.isfile('/usr/local/etc/asm_config.yaml'):
         config_file = '/usr/local/etc/asm_config.yaml'
+    elif os.path.isfile('/boot/asm_config.yaml'):
+        config_file = '/boot/asm_config.yaml'
     else:
-        config_file = 'asm_config.yaml'
+        raise RuntimeError("Config file not found")
     root_logger.info(f"Using config file {config_file}")
+    print(f"Using config file {config_file}")
 
     try:
         sensor_node = createSensorNode(config_file)

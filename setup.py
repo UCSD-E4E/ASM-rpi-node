@@ -14,6 +14,7 @@ default_requires = [
 ]
 
 pi_requires = [
+    'RaspiMotorHat @ git+https://github.com/UCSD-E4E/Raspi-MotorHat@turnOffMotor',
     'gpiozero',
     'rpi.gpio'
 ]
