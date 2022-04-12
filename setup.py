@@ -8,10 +8,12 @@ default_requires = [
         'bandit',
         'mypy',
         'RaspiMotorHat @ git+https://github.com/UCSD-E4E/Raspi-MotorHat@turnOffMotor',
-        'appdirs'
+        'appdirs',
+        'schema',
 ]
 
 pi_requires = [
+    'RaspiMotorHat @ git+https://github.com/UCSD-E4E/Raspi-MotorHat@turnOffMotor',
     'gpiozero',
     'rpi.gpio'
 ]
