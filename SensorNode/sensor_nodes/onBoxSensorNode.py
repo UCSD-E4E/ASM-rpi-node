@@ -8,7 +8,10 @@ from typing import Dict, Optional, Tuple, Type, Union
 
 from asm_protocol import codec
 from SensorNode import node
-
+import ASM_utils.ffmpeg.audio as audio
+import ASM_utils.ffmpeg.ffmpeg as ffmpeg
+import ASM_utils.ffmpeg.rtp as rtp
+import schema
 try:
     import gpiozero
 except ImportError:
@@ -19,34 +22,36 @@ except ImportError:
 class OnBoxSensorNode(node.SensorNodeBase):
     SENSOR_CLASS = 'ASM_NestingBox'
 
-    NESTING_BOX_KEYS: Dict[str, Union[Type, Tuple[Type, Type]]] = {
+    NESTING_BOX_SCHEMA = schema.Schema({
         'video_endpoint': str,
         'illumination_on': str,
         'illumination_off': str,
-        'illumination_level': (int, float),
-        'illumination_pin': int
-    }
+        'illumination_level': schema.Or(int, float),
+        'illumination_pin': int,
+        'audio_endpoint': str,
+        'audio_channels': int,
+        'audio_samplerate': int,
+        'audio_encoding': str
+    })
 
     def __init__(self, config_path: str):
         super().__init__(config_path=config_path)
         if 'ASM_NESTING_BOX' not in self._config_tree:
             raise RuntimeError('No Nesting Box settings found')
         sensor_params = self._config_tree['ASM_NESTING_BOX']
-        for key, key_type in self.NESTING_BOX_KEYS.items():
-            if key not in sensor_params:
-                raise RuntimeError(f'Key {key} not found in Nestimg Box '
-                                   'settings')
-            if not isinstance(sensor_params[key], key_type):
-                raise RuntimeError(f'Expecting {key_type} for ASM_NESTING_BOX.'
-                                   f'{key}, got {type(sensor_params[key])} '
-                                   'instead!')
-            self._log.info(f'Discovered {key}: {sensor_params[key]}')
+        self.NESTING_BOX_SCHEMA.validate(sensor_params)
         self.camera_endpoint = sensor_params['video_endpoint']
         assert(isinstance(self.camera_endpoint, str))
         if self.camera_endpoint.startswith('/') and not os.path.exists(self.camera_endpoint):
             raise RuntimeError(f"Unable to find endpoint {self.camera_endpoint}")
         if shutil.which('ffmpeg') is None:
             raise RuntimeError('Unable to find ffmpeg in PATH!')
+
+        self.__audio_source = audio.HWAudioSource(sensor_params['audio_endpoint'],
+                                            num_channels=sensor_params['audio_channels'],
+                                            sample_rate=sensor_params['audio_samplerate'])
+        self.__audio_sink = rtp.RTPAudioStream(hostname=self.data_endpoint)
+        self.__audio_sink.configure_audio(codec=sensor_params['audio_encoding'])
 
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
@@ -81,6 +86,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
         asyncio.create_task(self.LEDTask())
         command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
         await self.sendPacket(command)
+        command = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 2)
+        await self.sendPacket(command)
         return await super().setup()
 
     async def onRTPCommandResponse(self, packet: codec.binaryPacket):
@@ -107,5 +114,22 @@ class OnBoxSensorNode(node.SensorNodeBase):
                                                     self.data_server_uuid, 1)
                 await self.sendPacket(restart_cmd)
         elif packet.streamID == 2:
-            # set up audio streaming
-            pass
+            self.__audio_sink.set_port(packet.port)
+            ffmpeg_config = ffmpeg.FFMPEGInstance(input_obj=self.__audio_source, output_obj=self.__audio_sink)
+            cmd = ' '.join(ffmpeg_config.get_command())
+            proc_out = asyncio.subprocess.PIPE
+            proc_err = asyncio.subprocess.PIPE
+            self._log.info(f'Starting ffmpeg with command: {cmd}')
+            proc = await asyncio.create_subprocess_shell(cmd, stdout=proc_out, stderr=proc_err)
+
+            retval = await proc.wait()
+            if retval != 0:
+                self._log.warning("ffmpeg shut down with error code %d", retval)
+                self._log.info("ffmpeg stderr: %s", (await proc.stderr.read()).decode())
+                self._log.info("ffmpeg stdout: %s", (await proc.stdout.read()).decode())
+            else:
+                self._log.info("ffmpeg returned with code %d", retval)
+            if self.running:
+                restart_cmd = codec.E4E_START_RTP_CMD(self.uuid, self.data_server_uuid, 1)
+                await self.sendPacket(restart_cmd)
+

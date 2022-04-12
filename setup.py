@@ -10,6 +10,7 @@ default_requires = [
         'RaspiMotorHat @ git+https://github.com/UCSD-E4E/Raspi-MotorHat@turnOffMotor',
         'appdirs',
         'schema',
+        'AsmCommon',
 ]
 
 pi_requires = [

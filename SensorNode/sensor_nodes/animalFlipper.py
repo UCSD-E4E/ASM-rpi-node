@@ -7,6 +7,13 @@ from typing import Dict, List, Tuple, Type, Union
 import schema
 from asm_protocol import codec
 from SensorNode import node
+import logging
+__DISABLE__ = False
+try:
+    from RaspiMotorHat.Raspi_MotorHAT import Raspi_MotorHAT as Raspi_MotorHAT
+except PermissionError as e:
+    logging.exception("Flipper will not function!")
+    __DISABLE__ = True
 
 MOTOR_HAT_ENABLED = False
 if os.path.exists('/sys/firmware/devicetree/base/model'):
@@ -56,6 +63,8 @@ class AnimalFlipper(node.SensorNodeBase):
         loiter: float
 
     def __init__(self, config_path: str = None):
+        if __DISABLE__:
+            raise RuntimeError("Motor HAT not available!")
         super().__init__(config_path=config_path)
         if self.SENSOR_CLASS not in self._config_tree:
             raise RuntimeError("No Aminal Flipper settings found")
