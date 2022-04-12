@@ -73,7 +73,7 @@ heartbeat_period_s: 60
   # illumination_off: '08:00'
 
   # Illumination level - percentage of max illumination
-  # illumination_level: 90
+  # illumination_level: 50
 
   # Illumination handle - GPIO pin
   # illumination_pin: 19
