@@ -1,10 +1,10 @@
 import asyncio
-from SensorNode import node
+import appdirs
 from asm_protocol import codec
 import os
-import sys
-import appdirs
+from SensorNode import node
 import pathlib
+import sys
 
 class RemoteSensorNode(node.SensorNodeBase):
     SENSOR_CLASS = 'IP_Camera'
@@ -42,6 +42,7 @@ class RemoteSensorNode(node.SensorNodeBase):
         if os.getuid() == 0:
             self.ff_log_dir = pathlib.Path('var', 'log', 'ffmpeg_logs').absolute()
         else:
+            # absolute() not necessary because of ASMSensorNode dir
             self.ff_log_dir = pathlib.Path(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
         pathlib.Path(self.ff_log_dir).mkdir(parents=True, exist_ok=True)        
 
@@ -59,13 +60,13 @@ class RemoteSensorNode(node.SensorNodeBase):
         
         ff_stats_path = pathlib.Path(self.ff_log_dir, "ffstats.log")
         ff_info_path = pathlib.Path(self.ff_log_dir, "ffinfo.log")
-        script_path = "-m ASM_utils.ffmpeg.split_log"
+        split_script = "-m ASM_utils.ffmpeg.split_log"
 
         cmd = (f'ffmpeg -i rtsp://{self.ip_camera_user}:'
                f'{self.ip_camera_password}@{self.ip_camera_address}:'
                f'{self.ip_camera_port}/live.sdp -acodec libmp3lame -ar 11025 -vcodec copy '
                f'-f mpegts tcp://{self.data_endpoint}:{endpoint_port}'
-               f' 2>&1 | {sys.executable} {script_path} {ff_stats_path} {ff_info_path}'
+               f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}'
                )
         proc_out = asyncio.subprocess.PIPE
         proc_err = asyncio.subprocess.PIPE
