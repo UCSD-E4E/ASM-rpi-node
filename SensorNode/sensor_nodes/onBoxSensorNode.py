@@ -1,7 +1,9 @@
 import asyncio
+import appdirs
 import datetime as dt
 import logging
 import os
+import pathlib
 import shutil
 import sys
 from typing import Dict, Optional, Tuple, Type, Union
@@ -48,6 +50,12 @@ class OnBoxSensorNode(node.SensorNodeBase):
         if shutil.which('ffmpeg') is None:
             raise RuntimeError('Unable to find ffmpeg in PATH!')
 
+        if os.getuid() == 0:
+            self.ff_log_dir = pathlib.Path('var', 'log', 'ffmpeg_logs').absolute()
+        else:
+            # absolute() not necessary because of ASMSensorNode dir
+            self.ff_log_dir = pathlib.Path(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
+
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
 
@@ -87,11 +95,18 @@ class OnBoxSensorNode(node.SensorNodeBase):
         assert(isinstance(packet, codec.E4E_START_RTP_RSP))
         if packet.streamID == 1:
             endpoint_port = packet.port
+
+            ff_stats_path = pathlib.Path(self.ff_log_dir, "ffstats.log")
+            ff_info_path = pathlib.Path(self.ff_log_dir, "ffinfo.log")
+            split_script = "-m ASM_utils.ffmpeg.split_log"
+
             cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
-                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port}')
+                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} '
+                f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}')
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
             self._log.info(f'Starting ffmpeg with command: {cmd}')
+            self._log.info(f"FFmpeg logging to: {self.ff_log_dir}")
             proc = await asyncio.create_subprocess_shell(cmd,
                                                         stdout=proc_out,
                                                         stderr=proc_err)
