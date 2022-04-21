@@ -1,5 +1,4 @@
 import asyncio
-import appdirs
 import datetime as dt
 import logging
 import os
@@ -8,6 +7,7 @@ import shutil
 import sys
 from typing import Dict, Optional, Tuple, Type, Union
 
+import appdirs
 from asm_protocol import codec
 from SensorNode import node
 
