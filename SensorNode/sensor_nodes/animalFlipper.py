@@ -1,7 +1,9 @@
 import asyncio
 from dataclasses import dataclass
 import datetime as dt
+import logging
 import os
+import sys
 from typing import Dict, List, Tuple, Type, Union
 
 import schema
@@ -14,8 +16,11 @@ if os.path.exists('/sys/firmware/devicetree/base/model'):
         pi_name = model.read()
         if pi_name.find('Raspberry Pi') != -1:
             MOTOR_HAT_ENABLED = True
-            from RaspiMotorHat.Raspi_MotorHAT import \
-                Raspi_MotorHAT as Raspi_MotorHAT
+            try:
+                from RaspiMotorHat.Raspi_MotorHAT import \
+                    Raspi_MotorHAT as Raspi_MotorHAT
+            except ImportError:
+                logging.exception("Raspi Motor hat will not function")
 
 class AnimalFlipper(node.SensorNodeBase):
     SENSOR_CLASS = 'ASM_AnimalFlipper'
@@ -61,6 +66,7 @@ class AnimalFlipper(node.SensorNodeBase):
             raise RuntimeError("No Aminal Flipper settings found")
         
         flipper_params = self._config_tree[self.SENSOR_CLASS]
+
         self.SCHEMA.validate(flipper_params)
         if MOTOR_HAT_ENABLED:
             self.motor_hat = Raspi_MotorHAT(0x6F)
