@@ -73,7 +73,7 @@ heartbeat_period_s: 60
   # illumination_off: '08:00'
 
   # Illumination level - percentage of max illumination
-  # illumination_level: 90
+  # illumination_level: 50
 
   # Illumination handle - GPIO pin
   # illumination_pin: 19
@@ -95,17 +95,23 @@ heartbeat_period_s: 60
   # This is the home direction.  This is assumed to be "in".  Select from 1 or 2
   # home_direction: 1
 
-  # This is the amount of time to remain in the in position
-  # in_time_s: 300
-
-  # This is the number of steps to count going in.
-  # in_steps: 75
-
-  # This is amount of time to remain in the out position
-  # out_time_s: 300
-
-  # This is the number of steps to count going out.
-  # out_steps: 75
-
   # This is the output file to write to
   # data_file: /home/pi/flipper.txt
+
+  # This is the minimum time that the suffed animal will loiter either at the home or safe positions
+  # loiter_time_s: 10
+
+  # This is the outgoing threshold location, at which the animal starts exiting the frame
+  # out_threshold_steps: 17
+
+  # This is the outgoing frame location, at which the animal is fully out of the frame
+  # out_frame_steps: 95
+
+  # This is the safe location, at which the animal is safe to change directions
+  # safe_steps: 130
+
+  # This is the incoming frame location, at which the animal is just coming into the frame
+  # in_frame_steps: 30
+
+  # This is the incoming threshold location, at which the animal is fully back into the frame
+  # in_threshold_steps: 6

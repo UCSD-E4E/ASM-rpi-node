@@ -8,6 +8,7 @@ default_requires = [
         'bandit',
         'mypy',
         'appdirs'
+        'schema',
 ]
 
 pi_requires = [

@@ -4,6 +4,7 @@ import appdirs
 import logging
 import logging.handlers
 import pathlib
+import time
 
 from SensorNode.node import createSensorNode
 
@@ -24,24 +25,28 @@ def main():
     log_file_handler = logging.handlers.RotatingFileHandler(log_dest, maxBytes=5*1024*1024, backupCount=5)
     log_file_handler.setLevel(logging.DEBUG)
 
-    root_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S.%f %Z")
+    root_formatter = logging.Formatter('%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
     log_file_handler.setFormatter(root_formatter)
     root_logger.addHandler(log_file_handler)
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.WARN)
 
-    error_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S.%f %Z")
+    error_formatter = logging.Formatter('%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
     console_handler.setFormatter(error_formatter)
     root_logger.addHandler(console_handler)
+    logging.Formatter.converter = time.gmtime
 
-    if os.path.isfile('/boot/asm_config.yaml'):
-        config_file = '/boot/asm_config.yaml'
+    if os.path.isfile('asm_config.yaml'):
+        config_file = 'asm_config.yaml'
     elif os.path.isfile('/usr/local/etc/asm_config.yaml'):
         config_file = '/usr/local/etc/asm_config.yaml'
+    elif os.path.isfile('/boot/asm_config.yaml'):
+        config_file = '/boot/asm_config.yaml'
     else:
-        config_file = 'asm_config.yaml'
+        raise RuntimeError("Config file not found")
     root_logger.info(f"Using config file {config_file}")
+    print(f"Using config file {config_file}")
 
     try:
         sensor_node = createSensorNode(config_file)
