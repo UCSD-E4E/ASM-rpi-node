@@ -1,10 +1,12 @@
 import asyncio
-import appdirs
-from asm_protocol import codec
 import os
-from SensorNode import node
 import pathlib
 import sys
+
+import appdirs
+from asm_protocol import codec
+from SensorNode import node
+
 
 class RemoteSensorNode(node.SensorNodeBase):
     SENSOR_CLASS = 'IP_Camera'
