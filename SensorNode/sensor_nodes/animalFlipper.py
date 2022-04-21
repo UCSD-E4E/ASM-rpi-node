@@ -1,11 +1,17 @@
 import asyncio
 import datetime as dt
+import logging
 import os
+import sys
 from typing import Dict, Tuple, Type, Union
 
 from asm_protocol import codec
 from SensorNode import node
-from RaspiMotorHat.Raspi_MotorHAT import Raspi_MotorHAT as Raspi_MotorHAT
+
+try:
+    from RaspiMotorHat.Raspi_MotorHAT import Raspi_MotorHAT as Raspi_MotorHAT
+except ImportError
+    logging.exception("Raspi Motor hat will not function")
 
 class AnimalFlipper(node.SensorNodeBase):
     SENSOR_CLASS = 'ASM_AnimalFlipper'
@@ -37,45 +43,51 @@ class AnimalFlipper(node.SensorNodeBase):
                                    f'{key}, got {type(flipper_params[key])} '
                                    'instead!')
         
-        self.motor_hat = Raspi_MotorHAT(0x6F)
-        self.stepper = self.motor_hat.getStepper(flipper_params['motor_steps'], flipper_params['motor'])
-        self.home_distance = flipper_params['motor_steps']
-        self.stepper.setSpeed(flipper_params['motor_speed'])
+        if 'Raspi_MotorHAT' in sys.modules:
+            self.motor_hat = Raspi_MotorHAT(0x6F)
+            self.stepper = self.motor_hat.getStepper(flipper_params['motor_steps'], flipper_params['motor'])
+            self.home_distance = flipper_params['motor_steps']
+            self.stepper.setSpeed(flipper_params['motor_speed'])
 
-        self.in_time_s = flipper_params['in_time_s']
-        self.out_time_s = flipper_params['out_time_s']
-        self.in_steps = flipper_params['in_steps']
-        self.out_steps = flipper_params['out_steps']
-        self.home_direction = flipper_params['home_direction']
-        if self.home_direction not in [1, 2]:
-            raise RuntimeError(f'Invalid home direction: {self.home_direction}')
-        if self.home_direction == 1:
-            self.in_direction = 1
-            self.out_direction = 2
+            self.in_time_s = flipper_params['in_time_s']
+            self.out_time_s = flipper_params['out_time_s']
+            self.in_steps = flipper_params['in_steps']
+            self.out_steps = flipper_params['out_steps']
+            self.home_direction = flipper_params['home_direction']
+            if self.home_direction not in [1, 2]:
+                raise RuntimeError(f'Invalid home direction: {self.home_direction}')
+            if self.home_direction == 1:
+                self.in_direction = 1
+                self.out_direction = 2
+            else:
+                self.in_direction = 2
+                self.out_direction = 1
+            self.step_mode = Raspi_MotorHAT.MICROSTEP
         else:
-            self.in_direction = 2
-            self.out_direction = 1
-        self.step_mode = Raspi_MotorHAT.MICROSTEP
+            self._log.warning("Raspi Motor hat will not function")
+            self.motor_hat = None
+            self.stepper = None
 
         self.data_file = flipper_params['data_file']
 
     async def flipTask(self):
-        self.stepper.step(self.home_distance, self.home_direction, self.step_mode)
-        with open(self.data_file, 'a') as data_file:
-            while self.running:
-                self.stepper.step(self.out_steps, self.out_direction, self.step_mode)
-                now = dt.datetime.utcnow().isoformat()
-                data_file.write(f'{now}: out\n')
-                data_file.flush()
-                self.motor_hat.turnOffMotors()
-                await asyncio.sleep(self.out_time_s)
+        while self.stepper is not None:
+            self.stepper.step(self.home_distance, self.home_direction, self.step_mode)
+            with open(self.data_file, 'a') as data_file:
+                while self.running:
+                    self.stepper.step(self.out_steps, self.out_direction, self.step_mode)
+                    now = dt.datetime.utcnow().isoformat()
+                    data_file.write(f'{now}: out\n')
+                    data_file.flush()
+                    self.motor_hat.turnOffMotors()
+                    await asyncio.sleep(self.out_time_s)
 
-                self.stepper.step(self.in_steps, self.in_direction, self.step_mode)
-                now = dt.datetime.utcnow().isoformat()
-                data_file.write(f'{now}: in\n')
-                data_file.flush()
-                self.motor_hat.turnOffMotors()
-                await asyncio.sleep(self.in_time_s)
+                    self.stepper.step(self.in_steps, self.in_direction, self.step_mode)
+                    now = dt.datetime.utcnow().isoformat()
+                    data_file.write(f'{now}: in\n')
+                    data_file.flush()
+                    self.motor_hat.turnOffMotors()
+                    await asyncio.sleep(self.in_time_s)
 
     async def setup(self):
         asyncio.create_task(self.flipTask())
