@@ -136,6 +136,10 @@ class SensorNodeBase:
             except asyncio.queues.QueueEmpty:
                 await asyncio.sleep(0)
                 continue
+            except Exception: 
+                self._log.exception("Non-Empty Queue Exception throws")
+                await asyncio.sleep(0)
+                continue
 
     async def __receiver(self):
         while True:
