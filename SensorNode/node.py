@@ -136,6 +136,10 @@ class SensorNodeBase:
             except asyncio.queues.QueueEmpty:
                 await asyncio.sleep(0)
                 continue
+            except Exception: 
+                self._log.exception("Non-Empty Queue Exception throws")
+                await asyncio.sleep(0)
+                continue
 
     async def __receiver(self):
         while True:
@@ -156,8 +160,12 @@ class SensorNodeBase:
         print('tasks done')
 
     async def __do_networking(self):
-        self.reader, self.writer = await \
-            asyncio.open_connection(self.data_endpoint, self.port_number)
+        while True:
+            try:
+                self.reader, self.writer = await asyncio.open_connection(self.data_endpoint, self.port_number)
+                break
+            except:
+                continue
         heartbeat = asyncio.create_task(self.sendHeartbeat())
         receiver = asyncio.create_task(self.__receiver())
         sender = asyncio.create_task(self.__sender())
