@@ -38,7 +38,7 @@ data_server_uuid: 00000000-0000-0000-0000-000000000000
 # Sensor Node Heartbeat
 # 
 # This is how often the heartbeat packet is sent in seconds.
-heartbeat_period_s: 60
+heartbeat_period_s: 360
 
 # IP Camera Configuation Block
 # 
