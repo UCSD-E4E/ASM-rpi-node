@@ -82,6 +82,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 for threshold_time in sorted(ordered_time.keys()):
                     if now > threshold_time:
                         current_state = ordered_time[threshold_time]
+                if self.led.value != current_state:
+                    self.log.info(f"changing LED from {self.led.value} to {current_state}")
                 self.led.value = current_state
                 await asyncio.sleep(30)
 
