@@ -103,6 +103,13 @@ class OnBoxSensorNode(node.SensorNodeBase):
             cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
                 f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} '
                 f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}')
+            
+            if not self.data_endpoint2 is None:
+                cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
+                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} '
+                f' -vcodec copy -f mpegts tcp://{self.data_endpoint2}:{self.port2_number}'
+                f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}')
+                print(f"streaming with :{cmd}")
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
             self._log.info(f'Starting ffmpeg with command: {cmd}')
