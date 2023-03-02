@@ -86,16 +86,6 @@ class SensorNodeBase:
         self.port_number = int(self._config_tree['port'])
         self._log.info(f"Resolving endpoint as {self.data_endpoint}, UUID: {self.data_server_uuid}, port: {self.port_number}")
 
-        endpoint2 = self._config_tree['endpoint2']
-        self.data_endpoint2 = None
-        if not endpoint2 is None:
-            self.port2_number = self._config_tree['port2']
-            while self.data_endpoint2 is None:
-                try:
-                    self.data_endpoint2 = socket.gethostbyname(endpoint2)
-                except:
-                    time.sleep(1)
-            self._log.info(f"Resolving second endpoint as {self.data_endpoint2}, port:{self.port2_number}")
         
 
         if self.SENSOR_CLASS != "":

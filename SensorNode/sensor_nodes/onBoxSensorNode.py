@@ -70,6 +70,8 @@ class OnBoxSensorNode(node.SensorNodeBase):
             self.led_value: float = sensor_params['illumination_level'] / 100
         else:
             self._log.warning("LED will not function")
+        
+        self.extra_endpoints = sensor_params['extra_endpoints']
 
     async def LEDTask(self):
         while self.led is not None:
@@ -104,11 +106,10 @@ class OnBoxSensorNode(node.SensorNodeBase):
                 f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} '
                 f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}')
             
-            if not self.data_endpoint2 is None:
-                cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
-                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{10010} '
-                f' -vcodec copy -f mpegts tcp://{self.data_endpoint2}:{self.port2_number}'
-                f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}')
+            if not self.extra_endpoints is None:
+                for i in self.extra_endpoints:
+                    new_cmd = f' -vcodec copy -f mpegts {i}'
+                    cmd += new_cmd
                 print(f"streaming with :{cmd}")
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
