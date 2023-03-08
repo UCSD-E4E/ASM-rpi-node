@@ -6,7 +6,7 @@ import logging.handlers
 import pathlib
 import time
 
-from SensorNode.node import createSensorNode
+from sensor_node.node import createSensorNode
 
 
 def main():

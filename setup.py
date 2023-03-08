@@ -4,7 +4,7 @@ import os
 
 from setuptools import find_packages, setup
 
-import SensorNode
+import sensor_node
 
 default_requires = [
         "PyYaml",
@@ -29,7 +29,7 @@ if os.path.exists('/sys/firmware/devicetree/base/model'):
 
 setup(
     name='SensorNode',
-    version=SensorNode.__version__,
+    version=sensor_node.__version__,
     description='Sensor Node',
     author='UC San Diego Engineers for Exploration',
     author_email='e4e@eng.ucsd.edu',

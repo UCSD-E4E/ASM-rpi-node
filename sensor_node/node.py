@@ -12,8 +12,8 @@ import subprocess
 import yaml
 from asm_protocol import codec
 
-from SensorNode import sensor_nodes
-import SensorNode
+from sensor_node import sensor_nodes
+import sensor_node
 
 
 class SensorNodeBase:
@@ -47,7 +47,7 @@ class SensorNodeBase:
             path (str): Path to configuration file
         """
         self._log = logging.getLogger(self.__class__.__name__)
-        self._log.info(f"Starting ASM Sensor Node v{SensorNode.__version__}, {self.__getRevision()}")
+        self._log.info(f"Starting ASM Sensor Node v{sensor_node.__version__}, {self.__getRevision()}")
         if platform.system() not in ['posix', 'Linux']:
             raise RuntimeError('Not a Linux box!')
 

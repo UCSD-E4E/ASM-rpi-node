@@ -5,7 +5,7 @@ import sys
 
 import appdirs
 from asm_protocol import codec
-from SensorNode import node
+from sensor_node import node
 
 
 class RemoteSensorNode(node.SensorNodeBase):

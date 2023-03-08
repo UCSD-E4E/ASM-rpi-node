@@ -1,4 +1,4 @@
-from SensorNode import node
+from sensor_node import node
 
 
 class TestSensorNode(node.SensorNodeBase):

@@ -9,7 +9,7 @@ from typing import Dict, Optional, Tuple, Type, Union
 
 import appdirs
 from asm_protocol import codec
-from SensorNode import node
+from sensor_node import node
 
 try:
     import gpiozero

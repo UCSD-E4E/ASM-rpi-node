@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple, Type, Union
 
 import schema
 from asm_protocol import codec
-from SensorNode import node
+from sensor_node import node
 
 MOTOR_HAT_ENABLED = False
 if os.path.exists('/sys/firmware/devicetree/base/model'):
