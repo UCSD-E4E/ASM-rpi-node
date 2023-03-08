@@ -1,6 +1,6 @@
 """Example setup file
 """
-import os
+from pathlib import Path
 
 from setuptools import find_packages, setup
 
@@ -21,8 +21,9 @@ pi_requires = [
     'rpi.gpio'
 ]
 
-if os.path.exists('/sys/firmware/devicetree/base/model'):
-    with open('/sys/firmware/devicetree/base/model', 'r') as model:
+firmware_model = Path('/sys/firmware/devicetree/base/model')
+if firmware_model.exists():
+    with open(firmware_model, 'r', encoding='ascii') as model:
         pi_name = model.read()
         if pi_name.find('Raspberry Pi') != -1:
             default_requires.extend(pi_requires)
