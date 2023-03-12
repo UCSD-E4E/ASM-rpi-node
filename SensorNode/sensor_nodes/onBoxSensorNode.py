@@ -6,6 +6,7 @@ import pathlib
 import shutil
 import sys
 from typing import Dict, Optional, Tuple, Type, Union
+from urllib import parse
 
 import appdirs
 from asm_protocol import codec
@@ -56,6 +57,26 @@ class OnBoxSensorNode(node.SensorNodeBase):
             # absolute() not necessary because of ASMSensorNode dir
             self.ff_log_dir = pathlib.Path(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
 
+        self.extra_endpoints = sensor_params['extra_endpoints']
+        if self.extra_endpoints is not None:
+            if len(self.extra_endpoints) ==0:
+                self.extra_endpoints = None
+            else:
+                # Check if extra_endpoints a list 
+                try:
+                    assert isinstance(self.extra_endpoints, list)
+                except AssertionError as e:
+                    raise TypeError(f"Extra_endpoints is not None, expect type list, get{type(self.extra_endpoints)}") from None
+                # Check if url are properlt formatted
+                for url in self.extra_endpoints:
+                    parsed = parse.urlparse(url)
+                    if not (parsed.scheme and parsed.netloc):
+                        print(f"Detected Improper formatted URL: {url}")
+
+
+
+
+
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
 
@@ -71,7 +92,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
         else:
             self._log.warning("LED will not function")
         
-        self.extra_endpoints = sensor_params['extra_endpoints']
+        
 
     async def LEDTask(self):
         while self.led is not None:
@@ -107,7 +128,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
             
             
             
-            if not self.extra_endpoints is None:
+            if self.extra_endpoints is not None:
                 for i in self.extra_endpoints:
                     new_cmd = f' -vcodec copy -f mpegts {i}'
                     cmd += new_cmd
