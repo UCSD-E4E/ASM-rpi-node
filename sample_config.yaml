@@ -78,6 +78,9 @@ heartbeat_period_s: 360
   # Illumination handle - GPIO pin
   # illumination_pin: 19
 
+  # extra_endpoints -   a list of extra addresses for ffmpeg to push the streams to
+  # extra_endpoints: ["tcp://e4e-brix.dynamic.ucsd.edu:10010", "udp://100.113.173.246:10010"]
+
 # Aye-Aye Animal Flipper
 #
 # Include this block to configure the animal flipper.  Type should be 
@@ -115,3 +118,4 @@ heartbeat_period_s: 360
 
   # This is the incoming threshold location, at which the animal is fully back into the frame
   # in_threshold_steps: 6
+
