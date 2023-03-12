@@ -1,6 +1,10 @@
-from setuptools import setup, find_packages
-import SensorNode
+"""Example setup file
+"""
 import os
+
+from setuptools import find_packages, setup
+
+import SensorNode
 
 default_requires = [
         "PyYaml",
@@ -33,5 +37,13 @@ setup(
     scripts=['runSensorNode.py'],
     install_requires=[
         default_requires
-    ]
+    ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'coverage',
+            'pylint',
+            'wheel',
+        ]
+    },
 )
