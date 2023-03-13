@@ -130,7 +130,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
 
             cmd += f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}'
 
-            self._log.info(f"streaming with :{cmd}")
+            self._log.info(f"streaming using command:{cmd}")
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
             self._log.info(f'Starting ffmpeg with command: {cmd}')
