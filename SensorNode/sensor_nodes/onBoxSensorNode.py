@@ -57,26 +57,23 @@ class OnBoxSensorNode(node.SensorNodeBase):
             # absolute() not necessary because of ASMSensorNode dir
             self.ff_log_dir = pathlib.Path(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
 
-        self.extra_endpoints = sensor_params['extra_endpoints']
+        self.extra_endpoints: Optional[list[str]] = sensor_params['extra_endpoints']
         if self.extra_endpoints is not None:
-            if len(self.extra_endpoints) ==0:
+            if len(self.extra_endpoints) == 0:
                 self.extra_endpoints = None
             else:
                 # Check if extra_endpoints a list 
-                try:
-                    assert isinstance(self.extra_endpoints, list)
-                except AssertionError as e:
-                    raise TypeError(f"Extra_endpoints is not None, expect type list, get{type(self.extra_endpoints)}") from None
-                # Check if url are properlt formatted
+                assert isinstance(self.extra_endpoints, list),("Extra_endpoints is not None,"
+                                "expect type list, but get something else")
+                # Check if url has proper format
                 for url in self.extra_endpoints:
+                    assert(isinstance(url, str)), f"Expected URL to be string, get: {url}"
                     parsed = parse.urlparse(url)
-                    if not (parsed.scheme and parsed.netloc):
-                        print(f"Detected Improper formatted URL: {url}")
-
-
-
-
-
+                    assert(parsed.scheme and parsed.netloc), (f"Detect incorrectly formated URL: "
+                                                               f"{url}")
+                    assert(parsed.scheme == 'tcp'or parsed.scheme =='udp'), (f"Detect URL with"
+                                                 f"incorrect protocol: {url}")
+                    
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
 
@@ -92,8 +89,6 @@ class OnBoxSensorNode(node.SensorNodeBase):
         else:
             self._log.warning("LED will not function")
         
-        
-
     async def LEDTask(self):
         while self.led is not None:
             while self.running:
@@ -127,17 +122,15 @@ class OnBoxSensorNode(node.SensorNodeBase):
 
             cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
                 f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} ')
-            
-            
-            
+               
             if self.extra_endpoints is not None:
-                for i in self.extra_endpoints:
-                    new_cmd = f' -vcodec copy -f mpegts {i}'
+                for endpoint in self.extra_endpoints:
+                    new_cmd = f' -vcodec copy -f mpegts {endpoint}'
                     cmd += new_cmd
 
             cmd += f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}'
 
-            print(f"streaming with :{cmd}")
+            self._log.info(f"streaming with :{cmd}")
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
             self._log.info(f'Starting ffmpeg with command: {cmd}')
