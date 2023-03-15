@@ -6,6 +6,7 @@ import pathlib
 import shutil
 import sys
 from typing import Dict, Optional, Tuple, Type, Union
+from urllib import parse
 
 import appdirs
 from asm_protocol import codec
@@ -44,7 +45,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
                                    'instead!')
             self._log.info(f'Discovered {key}: {sensor_params[key]}')
         self.camera_endpoint = sensor_params['video_endpoint']
-        assert(isinstance(self.camera_endpoint, str))
+        assert isinstance(self.camera_endpoint, str)
         if self.camera_endpoint.startswith('/') and not os.path.exists(self.camera_endpoint):
             raise RuntimeError(f"Unable to find endpoint {self.camera_endpoint}")
         if shutil.which('ffmpeg') is None:
@@ -56,6 +57,22 @@ class OnBoxSensorNode(node.SensorNodeBase):
             # absolute() not necessary because of ASMSensorNode dir
             self.ff_log_dir = pathlib.Path(appdirs.user_log_dir('ASMSensorNode'), 'ffmpeg_logs')
 
+        self.extra_endpoints: Optional[list[str]] = sensor_params['extra_endpoints']
+        if self.extra_endpoints is not None:
+            if len(self.extra_endpoints) == 0:
+                self.extra_endpoints = None
+            else:
+                # Check if extra_endpoints a list
+                assert isinstance(self.extra_endpoints, list), ("Extra_endpoints is not None,"
+                                "expect type list, but get something else")
+                # Check if url has proper format
+                for url in self.extra_endpoints:
+                    assert isinstance(url, str), f"Expected URL to be string, get: {url}"
+                    parsed = parse.urlparse(url)
+                    assert parsed.scheme and parsed.netloc, (f"Detect incorrectly formated URL: "
+                                                               f"{url}")
+                    assert parsed.scheme in ('udp','tcp'), (f"Detect URL with"
+                                                 f"incorrect protocol: {url}")
         self.registerPacketHandler(codec.E4E_START_RTP_RSP,
                                    self.onRTPCommandResponse)
 
@@ -83,7 +100,7 @@ class OnBoxSensorNode(node.SensorNodeBase):
                     if now > threshold_time:
                         current_state = ordered_time[threshold_time]
                 if self.led.value != current_state:
-                    self._log.info(f"changing LED from {self.led.value} to {current_state}")
+                    self._log.info("changing LED from %s  to %s" % (self.led.value,current_state))
                 self.led.value = current_state
                 await asyncio.sleep(30)
 
@@ -103,12 +120,17 @@ class OnBoxSensorNode(node.SensorNodeBase):
             split_script = "-m ASM_utils.ffmpeg.split_log"
 
             cmd = (f'ffmpeg -f video4linux2 -input_format h264 -i {self.camera_endpoint}'
-                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} '
-                f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}')
+                f' -vcodec copy -f mpegts tcp://{self.data_endpoint}:{endpoint_port} ')
+            if self.extra_endpoints is not None:
+                for endpoint in self.extra_endpoints:
+                    new_cmd = f' -vcodec copy -f mpegts {endpoint}'
+                    cmd += new_cmd
+            cmd += f' 2>&1 | {sys.executable} {split_script} {ff_stats_path} {ff_info_path}'
+
             proc_out = asyncio.subprocess.PIPE
             proc_err = asyncio.subprocess.PIPE
-            self._log.info(f'Starting ffmpeg with command: {cmd}')
-            self._log.info(f"FFmpeg logging to: {self.ff_log_dir}")
+            self._log.info('Starting ffmpeg with command: %s', cmd)
+            self._log.info("FFmpeg logging to: %s", self.ff_log_dir)
             proc = await asyncio.create_subprocess_shell(cmd,
                                                         stdout=proc_out,
                                                         stderr=proc_err)
