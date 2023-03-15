@@ -80,14 +80,13 @@ class SensorNodeBase:
             except:
                 time.sleep(1)
 
-        
         uuid_str = self._config_tree['data_server_uuid']
         self.data_server_uuid = uuid.UUID(uuid_str)
         self.port_number = int(self._config_tree['port'])
         self._log.info("Resolving endpoint as %s, UUID: %s, port: %s" \
                        % (self.data_endpoint, self.data_server_uuid, self.port_number))
 
-        
+
 
         if self.SENSOR_CLASS != "":
             if self.SENSOR_CLASS != self._config_tree['type']:
