@@ -84,7 +84,8 @@ class SensorNodeBase:
         uuid_str = self._config_tree['data_server_uuid']
         self.data_server_uuid = uuid.UUID(uuid_str)
         self.port_number = int(self._config_tree['port'])
-        self._log.info(f"Resolving endpoint as {self.data_endpoint}, UUID: {self.data_server_uuid}, port: {self.port_number}")
+        self._log.info("Resolving endpoint as %s, UUID: %s, port: %s" \
+                       % (self.data_endpoint, self.data_server_uuid, self.port_number))
 
         
 
