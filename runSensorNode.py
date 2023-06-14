@@ -1,10 +1,12 @@
 #!/usr/bin/python
-import os
-import appdirs
 import logging
 import logging.handlers
+import os
 import pathlib
 import time
+
+import appdirs
+from ASM_utils.logging import configure_logging
 
 from SensorNode.node import createSensorNode
 
@@ -18,24 +20,8 @@ def main():
         log_dest = os.path.join(log_dir, 'asm_sensor_node.log')
 
     print(f"Logging to {log_dest}")
+    configure_logging()
     root_logger = logging.getLogger()
-    # Log to root to begin
-    root_logger.setLevel(logging.DEBUG)
-
-    log_file_handler = logging.handlers.RotatingFileHandler(log_dest, maxBytes=5*1024*1024, backupCount=5)
-    log_file_handler.setLevel(logging.DEBUG)
-
-    root_formatter = logging.Formatter('%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
-    log_file_handler.setFormatter(root_formatter)
-    root_logger.addHandler(log_file_handler)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.WARN)
-
-    error_formatter = logging.Formatter('%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
-    console_handler.setFormatter(error_formatter)
-    root_logger.addHandler(console_handler)
-    logging.Formatter.converter = time.gmtime
 
     if os.path.isfile('asm_config.yaml'):
         config_file = 'asm_config.yaml'

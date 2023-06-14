@@ -13,6 +13,7 @@ default_requires = [
         'mypy',
         'appdirs',
         'schema',
+        'AsmCommon @ git+https://github.com/UCSD-E4E/ASM-common.git',
 ]
 
 pi_requires = [
