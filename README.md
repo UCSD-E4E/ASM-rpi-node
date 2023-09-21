@@ -1,6 +1,8 @@
 # ASM-rpi-node
 Aye-Aye Sleep Monitoring Project Raspberry Pi Node
 
+This project is currently inactive.  If you are interested in contributing to this project, please contact Engineers for Exploration at e4e@ucsd.edu.
+
 ## Installation on a Raspberry Pi
 1.  Install RaspiOS on the Raspberry Pi's SD card.
 2.  Create the proper `wpa_supplicant.conf` file in the SD Card's boot partition.
